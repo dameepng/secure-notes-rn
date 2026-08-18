@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  bulkCreateNotes,
   clearAllNotes,
   createNote,
   deleteNote,
@@ -45,6 +46,31 @@ describe('noteStorage with AES Encryption', () => {
     expect(decryptedList[0].id).toBe(createdNote.id);
     expect(decryptedList[0].title).toBe(plainTitle);
     expect(decryptedList[0].content).toBe(sensitiveContent);
+  });
+
+  it('should support bulkCreateNotes for high performance stress test with encryption', async () => {
+    const dummyInputs = Array.from({ length: 50 }, (_, i) => ({
+      title: `Bulk Note #${i + 1}`,
+      content: `Sensitive Payload #${i + 1}`,
+    }));
+
+    const created = await bulkCreateNotes(dummyInputs, userId);
+    expect(created).toHaveLength(50);
+
+    const rawStored = await getRawStoredNotes();
+    expect(rawStored).toHaveLength(50);
+    expect(rawStored[0].isEncrypted).toBe(true);
+    expect(rawStored[0].content).toContain('U2FsdGVkX1');
+
+    const decrypted = await getNotes(userId);
+    expect(decrypted).toHaveLength(50);
+    expect(decrypted[0].title).toBeDefined();
+    expect(decrypted[0].content).toContain('Sensitive Payload');
+  });
+
+  it('should return empty array when bulkCreateNotes receives empty inputs', async () => {
+    const result = await bulkCreateNotes([], userId);
+    expect(result).toEqual([]);
   });
 
   it('should throw an error if note title is empty', async () => {
