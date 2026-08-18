@@ -129,6 +129,66 @@ export async function createNote(
 }
 
 /**
+ * Membuat banyak catatan sekaligus (bulk) dengan enkripsi untuk kebutuhan stress-test performa.
+ */
+export async function bulkCreateNotes(
+  inputs: NoteInput[],
+  userId: string,
+): Promise<Note[]> {
+  if (inputs.length === 0) {
+    return [];
+  }
+
+  const baseTimestamp = Date.now();
+  const newStoredNotes: StoredNote[] = [];
+  const newPlainNotes: Note[] = [];
+
+  inputs.forEach((input, index) => {
+    const title = input.title.trim() || `Catatan #${index + 1}`;
+    const plainContent = input.content.trim();
+    const cipherContent = plainContent ? encrypt(plainContent) : '';
+    const noteTime = baseTimestamp + index;
+
+    const stored: StoredNote = {
+      id: `note_bulk_${noteTime}_${Math.random().toString(36).substring(2, 7)}`,
+      title,
+      content: cipherContent,
+      createdAt: noteTime,
+      updatedAt: noteTime,
+      userId,
+      isEncrypted: true,
+    };
+
+    newStoredNotes.push(stored);
+    newPlainNotes.push({
+      id: stored.id,
+      title: stored.title,
+      content: plainContent,
+      createdAt: stored.createdAt,
+      updatedAt: stored.updatedAt,
+      userId: stored.userId,
+    });
+  });
+
+  try {
+    const rawData = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
+    const existingNotes: StoredNote[] = rawData ? JSON.parse(rawData) : [];
+    // Gabungkan data baru di atas data lama
+    const updatedNotes = [...newStoredNotes.reverse(), ...existingNotes];
+
+    await AsyncStorage.setItem(
+      NOTES_STORAGE_KEY,
+      JSON.stringify(updatedNotes),
+    );
+
+    return newPlainNotes.reverse();
+  } catch (error) {
+    console.error('Error in bulkCreateNotes:', error);
+    throw error;
+  }
+}
+
+/**
  * Menghapus catatan berdasarkan ID dari AsyncStorage.
  */
 export async function deleteNote(noteId: string): Promise<void> {
@@ -167,6 +227,7 @@ export default {
   getNotes,
   getRawStoredNotes,
   createNote,
+  bulkCreateNotes,
   deleteNote,
   clearAllNotes,
 };
