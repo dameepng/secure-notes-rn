@@ -1,7 +1,7 @@
 import React from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { TurboModuleRegistry } from 'react-native';
 
 import { AuthProvider } from './src/navigation/AuthContext';
@@ -32,17 +32,36 @@ console.log(` - Hermes Engine: ${isHermes ? 'ACTIVE ✅' : 'INACTIVE ❌'}`);
 console.log(` - React Version: ${React.version}`);
 console.log('====================================');
 
+const customDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#0f172a',
+    card: '#1e293b',
+    text: '#f8fafc',
+    border: '#334155',
+    primary: '#38bdf8',
+  },
+};
+
 function App() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
       <AuthProvider>
-        <NavigationContainer>
+        <NavigationContainer theme={customDarkTheme}>
           <RootNavigator />
         </NavigationContainer>
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+});
 
 export default App;
