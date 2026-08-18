@@ -15,7 +15,8 @@ export interface StoredNote {
 }
 
 /**
- * Mengambil daftar catatan dari AsyncStorage dan mendekripsinya menjadi plain text.
+ * Mengambil daftar catatan dari AsyncStorage dan mendekripsinya menjadi plain text secara aman.
+ * Menangani kasus data korup / JSON malformed tanpa menyebabkan aplikasi crash.
  */
 export async function getNotes(userId?: string): Promise<Note[]> {
   try {
@@ -24,33 +25,43 @@ export async function getNotes(userId?: string): Promise<Note[]> {
       return [];
     }
 
-    const storedNotes: StoredNote[] = JSON.parse(rawData);
+    let storedNotes: StoredNote[] = [];
+    try {
+      storedNotes = JSON.parse(rawData);
+      if (!Array.isArray(storedNotes)) {
+        console.warn('Stored notes data is not an array, initializing empty list.');
+        return [];
+      }
+    } catch (parseError) {
+      console.error('Failed to parse notes JSON from storage (Data corrupted):', parseError);
+      return [];
+    }
 
     // Filter berdasarkan userId jika disediakan
     const userNotes = userId
-      ? storedNotes.filter(n => n.userId === userId)
-      : storedNotes;
+      ? storedNotes.filter(n => n && n.userId === userId)
+      : storedNotes.filter(Boolean);
 
-    // Dekripsi setiap catatan
+    // Dekripsi setiap catatan secara aman
     const decryptedNotes: Note[] = userNotes.map(item => {
-      let decryptedContent = item.content;
+      let decryptedContent = item.content || '';
 
-      if (item.isEncrypted) {
+      if (item.isEncrypted && item.content) {
         try {
           decryptedContent = decrypt(item.content);
         } catch (error) {
           console.warn(`Failed to decrypt note ${item.id}:`, error);
-          decryptedContent = '[Gagal mendekripsi catatan: Data korup]';
+          decryptedContent = '⚠️ [Terkunci: Gagal mendekripsi atau data korup]';
         }
       }
 
       return {
-        id: item.id,
-        title: item.title,
+        id: item.id || `note_corrupt_${Math.random()}`,
+        title: item.title || '(Tanpa Judul)',
         content: decryptedContent,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        userId: item.userId,
+        createdAt: item.createdAt || Date.now(),
+        updatedAt: item.updatedAt || Date.now(),
+        userId: item.userId || 'unknown',
       };
     });
 
@@ -68,7 +79,11 @@ export async function getNotes(userId?: string): Promise<Note[]> {
 export async function getRawStoredNotes(): Promise<StoredNote[]> {
   try {
     const rawData = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
-    return rawData ? JSON.parse(rawData) : [];
+    if (!rawData) {
+      return [];
+    }
+    const parsed = JSON.parse(rawData);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.error('Error reading raw stored notes:', error);
     return [];
@@ -82,15 +97,23 @@ export async function createNote(
   input: NoteInput,
   userId: string,
 ): Promise<Note> {
-  const title = input.title.trim();
-  const plainContent = input.content.trim();
+  const title = input.title?.trim() || '';
+  const plainContent = input.content?.trim() || '';
 
   if (!title) {
     throw new Error('Judul catatan tidak boleh kosong.');
   }
 
   // Enkripsi isi catatan menggunakan AES
-  const cipherContent = plainContent ? encrypt(plainContent) : '';
+  let cipherContent = '';
+  if (plainContent) {
+    try {
+      cipherContent = encrypt(plainContent);
+    } catch (encError) {
+      console.error('Failed to encrypt note content:', encError);
+      throw new Error('Gagal mengenkripsi isi catatan.');
+    }
+  }
 
   const now = Date.now();
   const storedNote: StoredNote = {
@@ -105,7 +128,18 @@ export async function createNote(
 
   try {
     const rawData = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
-    const existingNotes: StoredNote[] = rawData ? JSON.parse(rawData) : [];
+    let existingNotes: StoredNote[] = [];
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(rawData);
+        if (Array.isArray(parsed)) {
+          existingNotes = parsed;
+        }
+      } catch {
+        existingNotes = [];
+      }
+    }
+
     const updatedNotes = [storedNote, ...existingNotes];
 
     await AsyncStorage.setItem(
@@ -123,7 +157,7 @@ export async function createNote(
       userId: storedNote.userId,
     };
   } catch (error) {
-    console.error('Error encrypting and saving note to AsyncStorage:', error);
+    console.error('Error saving note to AsyncStorage:', error);
     throw error;
   }
 }
@@ -144,8 +178,8 @@ export async function bulkCreateNotes(
   const newPlainNotes: Note[] = [];
 
   inputs.forEach((input, index) => {
-    const title = input.title.trim() || `Catatan #${index + 1}`;
-    const plainContent = input.content.trim();
+    const title = input.title?.trim() || `Catatan #${index + 1}`;
+    const plainContent = input.content?.trim() || '';
     const cipherContent = plainContent ? encrypt(plainContent) : '';
     const noteTime = baseTimestamp + index;
 
@@ -172,8 +206,18 @@ export async function bulkCreateNotes(
 
   try {
     const rawData = await AsyncStorage.getItem(NOTES_STORAGE_KEY);
-    const existingNotes: StoredNote[] = rawData ? JSON.parse(rawData) : [];
-    // Gabungkan data baru di atas data lama
+    let existingNotes: StoredNote[] = [];
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(rawData);
+        if (Array.isArray(parsed)) {
+          existingNotes = parsed;
+        }
+      } catch {
+        existingNotes = [];
+      }
+    }
+
     const updatedNotes = [...newStoredNotes.reverse(), ...existingNotes];
 
     await AsyncStorage.setItem(
@@ -198,8 +242,17 @@ export async function deleteNote(noteId: string): Promise<void> {
       return;
     }
 
-    const existingNotes: StoredNote[] = JSON.parse(rawData);
-    const updatedNotes = existingNotes.filter(n => n.id !== noteId);
+    let existingNotes: StoredNote[] = [];
+    try {
+      const parsed = JSON.parse(rawData);
+      if (Array.isArray(parsed)) {
+        existingNotes = parsed;
+      }
+    } catch {
+      return;
+    }
+
+    const updatedNotes = existingNotes.filter(n => n && n.id !== noteId);
 
     await AsyncStorage.setItem(
       NOTES_STORAGE_KEY,

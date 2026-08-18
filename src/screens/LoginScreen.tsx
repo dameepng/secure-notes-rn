@@ -13,34 +13,64 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../navigation/AuthContext';
 import { ApiError } from '../types/api';
+import { useToast } from '../components/ToastContext';
 
 export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+    setEmailError(null);
+    setPasswordError(null);
+    setGeneralError(null);
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setEmailError('Email tidak boleh kosong.');
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEmailError('Format email tidak valid (contoh: nama@domain.com).');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password tidak boleh kosong.');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password minimal 6 karakter.');
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   const handleLogin = async () => {
-    if (!email.trim()) {
-      setErrorMessage('Email tidak boleh kosong.');
-      return;
-    }
-    if (!password) {
-      setErrorMessage('Password tidak boleh kosong.');
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    setErrorMessage(null);
+    setGeneralError(null);
 
     try {
       await login({ email: email.trim(), password });
+      showSuccess('Selamat datang di SecureNotes!', 'Login Berhasil');
     } catch (err: unknown) {
       const apiErr = err as ApiError;
-      setErrorMessage(apiErr.message || 'Gagal login. Silakan coba lagi.');
+      const message =
+        apiErr.message ||
+        'Gagal login. Pastikan kredensial benar dan koneksi internet aktif.';
+      setGeneralError(message);
+      showError(message, 'Autentikasi Gagal');
     } finally {
       setLoading(false);
     }
@@ -49,7 +79,9 @@ export const LoginScreen: React.FC = () => {
   const handleQuickFill = () => {
     setEmail('adam@securenotes.dev');
     setPassword('password123');
-    setErrorMessage(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setGeneralError(null);
   };
 
   return (
@@ -64,51 +96,65 @@ export const LoginScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>FASE 3 — AUTH FLOW</Text>
+            <Text style={styles.badgeText}>FASE 8 — ERROR HANDLING & UX</Text>
           </View>
           <Text style={styles.appName}>SecureNotes</Text>
           <Text style={styles.appTagline}>
-            Aplikasi Catatan Pribadi Terenkripsi
+            Aplikasi Catatan Pribadi Terenkripsi AES-256
           </Text>
         </View>
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Masuk ke Akun</Text>
           <Text style={styles.formSubtitle}>
-            Gunakan akun dummy untuk memulai sesi Anda
+            Gunakan akun dummy untuk memulai sesi terenkripsi Anda
           </Text>
 
-          {errorMessage && (
+          {generalError && (
             <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Text style={styles.errorText}>{generalError}</Text>
             </View>
           )}
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, emailError && styles.inputError]}
               placeholder="contoh@email.com"
               placeholderTextColor="#64748b"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={text => {
+                setEmail(text);
+                if (emailError) {
+                  setEmailError(null);
+                }
+              }}
               autoCapitalize="none"
               keyboardType="email-address"
               editable={!loading}
             />
+            {emailError && <Text style={styles.fieldErrorText}>{emailError}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, passwordError && styles.inputError]}
               placeholder="Minimal 6 karakter"
               placeholderTextColor="#64748b"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={text => {
+                setPassword(text);
+                if (passwordError) {
+                  setPasswordError(null);
+                }
+              }}
               secureTextEntry
               editable={!loading}
             />
+            {passwordError && (
+              <Text style={styles.fieldErrorText}>{passwordError}</Text>
+            )}
           </View>
 
           <TouchableOpacity
@@ -134,8 +180,7 @@ export const LoginScreen: React.FC = () => {
 
         <View style={styles.footerNote}>
           <Text style={styles.footerText}>
-            🔒 Sesi login disimpan lokal via AsyncStorage untuk persistensi
-            aplikasi.
+            🔒 Sesi login dan token JWT disimpan lokal via AsyncStorage terenkripsi.
           </Text>
         </View>
       </ScrollView>
@@ -228,6 +273,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     color: '#f8fafc',
     fontSize: 14,
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  fieldErrorText: {
+    color: '#f87171',
+    fontSize: 11,
+    marginTop: 4,
   },
   loginBtn: {
     backgroundColor: '#0284c7',

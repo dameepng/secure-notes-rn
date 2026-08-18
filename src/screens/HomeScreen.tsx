@@ -23,6 +23,7 @@ import { Note, NoteInput } from '../types/note';
 import NoteCard from '../components/NoteCard';
 import AddNoteModal from '../components/AddNoteModal';
 import { checkDeviceSecurityStatus, SecurityStatus } from '../native';
+import { useToast } from '../components/ToastContext';
 
 const SAMPLE_TOPICS = [
   'Kunci Enkripsi Server API',
@@ -46,9 +47,11 @@ const SAMPLE_CONTENTS = [
 export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { showSuccess, showError, showInfo } = useToast();
 
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -62,16 +65,20 @@ export const HomeScreen: React.FC = () => {
   const userId = user?.id || 'guest_user';
 
   const loadNotes = useCallback(async () => {
+    setLoadError(null);
     try {
       const data = await getNotes(user?.id);
       setNotes(data);
     } catch (error) {
       console.error('Failed to load notes:', error);
+      const msg = 'Gagal memuat catatan dari penyimpanan lokal.';
+      setLoadError(msg);
+      showError(msg, 'Storage Error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id]);
+  }, [user?.id, showError]);
 
   const loadSecurityDiagnostics = useCallback(async () => {
     setCheckingSecurity(true);
@@ -80,10 +87,11 @@ export const HomeScreen: React.FC = () => {
       setSecurityStatus(status);
     } catch (error) {
       console.error('Failed to load native security status:', error);
+      showError('Gagal memanggil native security module.', 'TurboModule Error');
     } finally {
       setCheckingSecurity(false);
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     loadNotes();
@@ -97,31 +105,41 @@ export const HomeScreen: React.FC = () => {
   }, [loadNotes, loadSecurityDiagnostics]);
 
   const handleCreateNote = async (input: NoteInput) => {
-    const newNote = await createNote(input, userId);
-    setNotes(prev => [newNote, ...prev]);
+    try {
+      const newNote = await createNote(input, userId);
+      setNotes(prev => [newNote, ...prev]);
+      showSuccess(`Catatan "${newNote.title}" berhasil dienkripsi & disimpan.`);
+    } catch (error) {
+      showError((error as Error).message || 'Gagal menyimpan catatan.');
+      throw error;
+    }
   };
 
-  const handleDeleteNote = useCallback((noteId: string) => {
-    Alert.alert(
-      'Hapus Catatan',
-      'Apakah Anda yakin ingin menghapus catatan ini?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteNote(noteId);
-              setNotes(prev => prev.filter(n => n.id !== noteId));
-            } catch (error) {
-              Alert.alert('Error', 'Gagal menghapus catatan.');
-            }
+  const handleDeleteNote = useCallback(
+    (noteId: string) => {
+      Alert.alert(
+        'Hapus Catatan',
+        'Apakah Anda yakin ingin menghapus catatan ini?',
+        [
+          { text: 'Batal', style: 'cancel' },
+          {
+            text: 'Hapus',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteNote(noteId);
+                setNotes(prev => prev.filter(n => n.id !== noteId));
+                showInfo('Catatan berhasil dihapus.');
+              } catch (error) {
+                showError('Gagal menghapus catatan dari penyimpanan.');
+              }
+            },
           },
-        },
-      ],
-    );
-  }, []);
+        ],
+      );
+    },
+    [showInfo, showError],
+  );
 
   const handleGenerateStressTest = useCallback(
     async (count: number) => {
@@ -149,19 +167,19 @@ export const HomeScreen: React.FC = () => {
         const elapsedMs = Date.now() - startTime;
 
         setNotes(prev => [...createdNotes, ...prev]);
-        setPerfBenchmarkText(
-          `⚡ Berhasil generate & enkripsi ${count} catatan dalam ${elapsedMs}ms! Total: ${
-            notes.length + count
-          } items.`,
-        );
+        const benchmarkMsg = `⚡ Berhasil generate & enkripsi ${count} catatan dalam ${elapsedMs}ms! Total: ${
+          notes.length + count
+        } items.`;
+        setPerfBenchmarkText(benchmarkMsg);
+        showSuccess(`Berhasil membuat ${count} catatan (${elapsedMs}ms).`);
       } catch (error) {
         console.error('Stress test generation failed:', error);
-        Alert.alert('Error', 'Gagal membuat catatan dummy.');
+        showError('Gagal membuat catatan dummy untuk stress test.');
       } finally {
         setGeneratingCount(null);
       }
     },
-    [notes.length, userId],
+    [notes.length, userId, showSuccess, showError],
   );
 
   const handleClearAllNotes = useCallback(() => {
@@ -182,14 +200,15 @@ export const HomeScreen: React.FC = () => {
               await clearAllNotes();
               setNotes([]);
               setPerfBenchmarkText('🧹 Semua catatan berhasil dibersihkan.');
+              showInfo('Seluruh catatan berhasil dibersihkan.');
             } catch (error) {
-              Alert.alert('Error', 'Gagal mengosongkan catatan.');
+              showError('Gagal mengosongkan catatan.');
             }
           },
         },
       ],
     );
-  }, [notes.length]);
+  }, [notes.length, showInfo, showError]);
 
   const handleLogout = () => {
     Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar?', [
@@ -201,6 +220,7 @@ export const HomeScreen: React.FC = () => {
           setLoggingOut(true);
           try {
             await logout();
+            showInfo('Sesi login telah berakhir.');
           } finally {
             setLoggingOut(false);
           }
@@ -221,6 +241,16 @@ export const HomeScreen: React.FC = () => {
   const headerComponent = useMemo(
     () => (
       <View style={styles.listHeaderContainer}>
+        {/* Storage Load Error Banner */}
+        {loadError && (
+          <View style={styles.loadErrorBanner}>
+            <Text style={styles.loadErrorText}>⚠️ {loadError}</Text>
+            <TouchableOpacity style={styles.retryBtnSmall} onPress={loadNotes}>
+              <Text style={styles.retryBtnTextSmall}>Coba Lagi</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Custom TurboModule Native Security Diagnostic Card */}
         <View style={styles.securityCard}>
           <View style={styles.securityHeader}>
@@ -373,6 +403,8 @@ export const HomeScreen: React.FC = () => {
       </View>
     ),
     [
+      loadError,
+      loadNotes,
       securityStatus,
       checkingSecurity,
       loadSecurityDiagnostics,
@@ -499,6 +531,34 @@ const styles = StyleSheet.create({
   },
   listHeaderContainer: {
     marginBottom: 8,
+  },
+  loadErrorBanner: {
+    backgroundColor: '#450a0a',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  loadErrorText: {
+    color: '#fca5a5',
+    fontSize: 12,
+    flex: 1,
+    marginRight: 8,
+  },
+  retryBtnSmall: {
+    backgroundColor: '#dc2626',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  retryBtnTextSmall: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   securityCard: {
     backgroundColor: '#131e32',

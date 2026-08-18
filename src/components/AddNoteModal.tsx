@@ -26,35 +26,42 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSave = async () => {
-    if (!title.trim()) {
-      setErrorMessage('Judul catatan harus diisi.');
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setTitleError('Judul catatan harus diisi.');
       return;
     }
 
     setSubmitting(true);
     setErrorMessage(null);
+    setTitleError(null);
 
     try {
       await onSubmit({
-        title: title.trim(),
+        title: trimmedTitle,
         content: content.trim(),
       });
       setTitle('');
       setContent('');
       onClose();
     } catch (err: unknown) {
-      setErrorMessage((err as Error).message || 'Gagal menyimpan catatan.');
+      setErrorMessage((err as Error).message || 'Gagal mengenkripsi dan menyimpan catatan.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleCancel = () => {
+    if (submitting) {
+      return;
+    }
     setTitle('');
     setContent('');
+    setTitleError(null);
     setErrorMessage(null);
     onClose();
   };
@@ -85,17 +92,23 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Judul Catatan *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, titleError && styles.inputError]}
               placeholder="Contoh: Ide Project React Native"
               placeholderTextColor="#64748b"
               value={title}
-              onChangeText={setTitle}
+              onChangeText={text => {
+                setTitle(text);
+                if (titleError) {
+                  setTitleError(null);
+                }
+              }}
               editable={!submitting}
             />
+            {titleError && <Text style={styles.fieldErrorText}>{titleError}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Isi Catatan</Text>
+            <Text style={styles.label}>Isi Catatan (Akan Dienkripsi AES)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Tulis detail catatan Anda di sini..."
@@ -108,6 +121,12 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
               editable={!submitting}
             />
           </View>
+
+          {submitting && (
+            <View style={styles.encryptingBanner}>
+              <Text style={styles.encryptingText}>🔒 Mengenkripsi data dengan AES-256...</Text>
+            </View>
+          )}
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
@@ -124,7 +143,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
               {submitting ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text style={styles.saveBtnText}>Simpan</Text>
+                <Text style={styles.saveBtnText}>Simpan Enkripsi</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -195,8 +214,28 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     fontSize: 14,
   },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  fieldErrorText: {
+    color: '#f87171',
+    fontSize: 11,
+    marginTop: 4,
+  },
   textArea: {
     minHeight: 100,
+  },
+  encryptingBanner: {
+    backgroundColor: '#064e3b',
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  encryptingText: {
+    color: '#a7f3d0',
+    fontSize: 12,
+    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',
