@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   RefreshControl,
   StyleSheet,
   Text,
@@ -11,10 +12,35 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../navigation/AuthContext';
-import { createNote, deleteNote, getNotes } from '../storage/noteStorage';
+import {
+  bulkCreateNotes,
+  clearAllNotes,
+  createNote,
+  deleteNote,
+  getNotes,
+} from '../storage/noteStorage';
 import { Note, NoteInput } from '../types/note';
 import NoteCard from '../components/NoteCard';
 import AddNoteModal from '../components/AddNoteModal';
+
+const SAMPLE_TOPICS = [
+  'Kunci Enkripsi Server API',
+  'Rencana Pengembangan Fitur Q3',
+  'Daftar Belanja Kebutuhan Kantor',
+  'Catatan Harian Antigravity IDE',
+  'Meeting Notes Sprint Review',
+  'Konfigurasi TurboModule & Fabric',
+  'Ide Startup React Native New Architecture',
+  'Audit Keamanan Password & Token',
+];
+
+const SAMPLE_CONTENTS = [
+  'Pastikan seluruh payload sensitif dienkripsi AES sebelum masuk ke AsyncStorage lokal.',
+  'Arsitektur New Arch menggunakan Fabric UI Manager untuk rendering C++ langsung tanpa bridge.',
+  'Benchmarking FlatList dengan windowSize=5 dan removeClippedSubviews=true menunjukkan FPS 60/120 stabil.',
+  'Gunakan keyExtractor yang stabil dan React.memo pada item component untuk meminimalisir overhead render.',
+  'Koneksi TurboModules berjalan sinkron dan langsung mengeksekusi C++ native methods.',
+];
 
 export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -25,6 +51,10 @@ export const HomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [generatingCount, setGeneratingCount] = useState<number | null>(null);
+  const [perfBenchmarkText, setPerfBenchmarkText] = useState<string | null>(null);
+
+  const userId = user?.id || 'guest_user';
 
   const loadNotes = useCallback(async () => {
     try {
@@ -42,18 +72,17 @@ export const HomeScreen: React.FC = () => {
     loadNotes();
   }, [loadNotes]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     loadNotes();
-  };
+  }, [loadNotes]);
 
   const handleCreateNote = async (input: NoteInput) => {
-    const userId = user?.id || 'guest_user';
     const newNote = await createNote(input, userId);
     setNotes(prev => [newNote, ...prev]);
   };
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = useCallback((noteId: string) => {
     Alert.alert(
       'Hapus Catatan',
       'Apakah Anda yakin ingin menghapus catatan ini?',
@@ -73,7 +102,75 @@ export const HomeScreen: React.FC = () => {
         },
       ],
     );
-  };
+  }, []);
+
+  const handleGenerateStressTest = useCallback(
+    async (count: number) => {
+      setGeneratingCount(count);
+      setPerfBenchmarkText(null);
+
+      const startTime = Date.now();
+      const dummyInputs: NoteInput[] = [];
+
+      for (let i = 1; i <= count; i++) {
+        const topic =
+          SAMPLE_TOPICS[(i - 1) % SAMPLE_TOPICS.length] + ` #${notes.length + i}`;
+        const content =
+          SAMPLE_CONTENTS[(i - 1) % SAMPLE_CONTENTS.length] +
+          ` [StressTest Item ${i}/${count}]`;
+
+        dummyInputs.push({
+          title: topic,
+          content: content,
+        });
+      }
+
+      try {
+        const createdNotes = await bulkCreateNotes(dummyInputs, userId);
+        const elapsedMs = Date.now() - startTime;
+
+        setNotes(prev => [...createdNotes, ...prev]);
+        setPerfBenchmarkText(
+          `⚡ Berhasil generate & enkripsi ${count} catatan dalam ${elapsedMs}ms! Total: ${
+            notes.length + count
+          } items.`,
+        );
+      } catch (error) {
+        console.error('Stress test generation failed:', error);
+        Alert.alert('Error', 'Gagal membuat catatan dummy.');
+      } finally {
+        setGeneratingCount(null);
+      }
+    },
+    [notes.length, userId],
+  );
+
+  const handleClearAllNotes = useCallback(() => {
+    if (notes.length === 0) {
+      return;
+    }
+
+    Alert.alert(
+      'Bersihkan Semua Catatan',
+      `Apakah Anda yakin ingin menghapus seluruh ${notes.length} catatan dari storage?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus Semua',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearAllNotes();
+              setNotes([]);
+              setPerfBenchmarkText('🧹 Semua catatan berhasil dibersihkan.');
+            } catch (error) {
+              Alert.alert('Error', 'Gagal mengosongkan catatan.');
+            }
+          },
+        },
+      ],
+    );
+  }, [notes.length]);
 
   const handleLogout = () => {
     Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar?', [
@@ -93,13 +190,110 @@ export const HomeScreen: React.FC = () => {
     ]);
   };
 
+  const keyExtractor = useCallback((item: Note) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Note }) => (
+      <NoteCard note={item} onDelete={handleDeleteNote} />
+    ),
+    [handleDeleteNote],
+  );
+
+  const headerComponent = useMemo(
+    () => (
+      <View style={styles.listHeaderContainer}>
+        {/* Top Action Bar */}
+        <View style={styles.actionBar}>
+          <View style={styles.titleCol}>
+            <Text style={styles.sectionTitle}>Daftar Catatan</Text>
+            <Text style={styles.sectionSubtitle}>
+              {notes.length} catatan terenkripsi (AES)
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => setIsModalVisible(true)}>
+            <Text style={styles.addBtnText}>+ Tambah</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Stress Test & Performance Control Card */}
+        <View style={styles.stressCard}>
+          <View style={styles.stressHeader}>
+            <Text style={styles.stressTitle}>🚀 Fabric FlatList Stress-Test</Text>
+            <Text style={styles.stressBadge}>FASE 6</Text>
+          </View>
+          <Text style={styles.stressDesc}>
+            Uji performa Fabric UI recycling dengan me-render ratusan catatan terenkripsi AES secara instan.
+          </Text>
+
+          <View style={styles.stressButtonsRow}>
+            <TouchableOpacity
+              style={[
+                styles.stressBtn,
+                generatingCount === 100 && styles.stressBtnDisabled,
+              ]}
+              disabled={generatingCount !== null}
+              onPress={() => handleGenerateStressTest(100)}>
+              {generatingCount === 100 ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.stressBtnText}>+100 Notes</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.stressBtn,
+                styles.stressBtnPurple,
+                generatingCount === 500 && styles.stressBtnDisabled,
+              ]}
+              disabled={generatingCount !== null}
+              onPress={() => handleGenerateStressTest(500)}>
+              {generatingCount === 500 ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.stressBtnText}>+500 Notes</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.stressBtn,
+                styles.stressBtnRed,
+                (generatingCount !== null || notes.length === 0) &&
+                  styles.stressBtnDisabled,
+              ]}
+              disabled={generatingCount !== null || notes.length === 0}
+              onPress={handleClearAllNotes}>
+              <Text style={styles.stressBtnText}>Bersihkan</Text>
+            </TouchableOpacity>
+          </View>
+
+          {perfBenchmarkText && (
+            <View style={styles.perfResultBox}>
+              <Text style={styles.perfResultText}>{perfBenchmarkText}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    ),
+    [
+      notes.length,
+      generatingCount,
+      perfBenchmarkText,
+      handleGenerateStressTest,
+      handleClearAllNotes,
+    ],
+  );
+
   return (
     <View
       style={[
         styles.container,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
-      {/* Header */}
+      {/* App Bar */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Halo,</Text>
@@ -118,35 +312,26 @@ export const HomeScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Action Bar */}
-      <View style={styles.actionBar}>
-        <View>
-          <Text style={styles.sectionTitle}>Daftar Catatan</Text>
-          <Text style={styles.sectionSubtitle}>
-            {notes.length} catatan tersimpan di storage
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => setIsModalVisible(true)}>
-          <Text style={styles.addBtnText}>+ Tambah</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content / Notes List */}
+      {/* Main FlatList with Fabric High Performance Optimizations */}
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#38bdf8" />
-          <Text style={styles.loadingText}>Memuat catatan...</Text>
+          <Text style={styles.loadingText}>Memuat catatan terenkripsi...</Text>
         </View>
       ) : (
         <FlatList
           data={notes}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <NoteCard note={item} onDelete={handleDeleteNote} />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          ListHeaderComponent={headerComponent}
           contentContainerStyle={styles.listContent}
+          // High performance FlatList & Fabric optimization props
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          updateCellsBatchingPeriod={50}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -160,8 +345,8 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.emptyIcon}>📝</Text>
               <Text style={styles.emptyTitle}>Belum Ada Catatan</Text>
               <Text style={styles.emptySubtitle}>
-                Tekan tombol "+ Tambah" di atas untuk membuat catatan pertama
-                Anda.
+                Tekan tombol "+ Tambah" atau gunakan fitur "+100 Notes" di atas
+                untuk menguji scrolling 60/120 FPS.
               </Text>
             </View>
           }
@@ -215,12 +400,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
   },
+  listHeaderContainer: {
+    marginBottom: 8,
+  },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     paddingVertical: 14,
+  },
+  titleCol: {
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,
@@ -234,8 +424,8 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     backgroundColor: '#0284c7',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     borderRadius: 8,
   },
   addBtnText: {
@@ -243,9 +433,83 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
+  stressCard: {
+    backgroundColor: '#1e293b',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginBottom: 14,
+  },
+  stressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  stressTitle: {
+    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  stressBadge: {
+    backgroundColor: '#0284c7',
+    color: '#e0f2fe',
+    fontSize: 10,
+    fontWeight: '800',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  stressDesc: {
+    color: '#94a3b8',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  stressButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  stressBtn: {
+    flex: 1,
+    backgroundColor: '#0369a1',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stressBtnPurple: {
+    backgroundColor: '#6d28d9',
+  },
+  stressBtnRed: {
+    backgroundColor: '#991b1b',
+  },
+  stressBtnDisabled: {
+    opacity: 0.5,
+  },
+  stressBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  perfResultBox: {
+    backgroundColor: '#0f172a',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#0284c7',
+  },
+  perfResultText: {
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   centerContainer: {
     flex: 1,
@@ -260,7 +524,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 40,
     paddingHorizontal: 20,
   },
   emptyIcon: {

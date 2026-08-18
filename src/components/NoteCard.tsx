@@ -7,7 +7,7 @@ interface NoteCardProps {
   onDelete: (noteId: string) => void;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
+const NoteCardComponent: React.FC<NoteCardProps> = ({ note, onDelete }) => {
   const formattedDate = new Date(note.createdAt).toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'short',
@@ -43,6 +43,17 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
     </View>
   );
 };
+
+// Optimasi React.memo untuk mencegah re-render saat scrolling FlatList dengan ratusan/ribuan item
+export const NoteCard = React.memo(NoteCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.note.id === nextProps.note.id &&
+    prevProps.note.title === nextProps.note.title &&
+    prevProps.note.content === nextProps.note.content &&
+    prevProps.note.updatedAt === nextProps.note.updatedAt &&
+    prevProps.onDelete === nextProps.onDelete
+  );
+});
 
 const styles = StyleSheet.create({
   card: {
