@@ -3,6 +3,8 @@ import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { TurboModuleRegistry } from 'react-native';
+import { GluestackUIProvider } from '@gluestack-ui/themed';
+import { config } from '@gluestack-ui/config';
 
 import { AuthProvider } from './src/navigation/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -49,16 +51,18 @@ const customDarkTheme = {
 function App() {
   return (
     <ErrorBoundary>
-      <SafeAreaProvider style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-        <ToastProvider>
-          <AuthProvider>
-            <NavigationContainer theme={customDarkTheme}>
-              <RootNavigator />
-            </NavigationContainer>
-          </AuthProvider>
-        </ToastProvider>
-      </SafeAreaProvider>
+      <GluestackUIProvider config={config}>
+        <SafeAreaProvider style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+          <ToastProvider>
+            <AuthProvider>
+              <NavigationContainer theme={customDarkTheme}>
+                <RootNavigator />
+              </NavigationContainer>
+            </AuthProvider>
+          </ToastProvider>
+        </SafeAreaProvider>
+      </GluestackUIProvider>
     </ErrorBoundary>
   );
 }

@@ -1,16 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
+  Alert as RNAlert,
   FlatList,
   Platform,
   RefreshControl,
   StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Box,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  Card,
+  Badge,
+  BadgeText,
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  Spinner,
+  Alert,
+  AlertText,
+  Center,
+} from '@gluestack-ui/themed';
+
 import { useAuth } from '../navigation/AuthContext';
 import {
   bulkCreateNotes,
@@ -117,7 +131,7 @@ export const HomeScreen: React.FC = () => {
 
   const handleDeleteNote = useCallback(
     (noteId: string) => {
-      Alert.alert(
+      RNAlert.alert(
         'Hapus Catatan',
         'Apakah Anda yakin ingin menghapus catatan ini?',
         [
@@ -187,7 +201,7 @@ export const HomeScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
+    RNAlert.alert(
       'Bersihkan Semua Catatan',
       `Apakah Anda yakin ingin menghapus seluruh ${notes.length} catatan dari storage?`,
       [
@@ -211,7 +225,7 @@ export const HomeScreen: React.FC = () => {
   }, [notes.length, showInfo, showError]);
 
   const handleLogout = () => {
-    Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar?', [
+    RNAlert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar?', [
       { text: 'Batal', style: 'cancel' },
       {
         text: 'Keluar',
@@ -240,167 +254,220 @@ export const HomeScreen: React.FC = () => {
 
   const headerComponent = useMemo(
     () => (
-      <View style={styles.listHeaderContainer}>
+      <VStack space="md" mb="$2">
         {/* Storage Load Error Banner */}
         {loadError && (
-          <View style={styles.loadErrorBanner}>
-            <Text style={styles.loadErrorText}>⚠️ {loadError}</Text>
-            <TouchableOpacity style={styles.retryBtnSmall} onPress={loadNotes}>
-              <Text style={styles.retryBtnTextSmall}>Coba Lagi</Text>
-            </TouchableOpacity>
-          </View>
+          <Alert action="error" variant="accent" bg="#450a0a" borderColor="#ef4444" borderRadius="$xl" p="$3">
+            <HStack justifyContent="space-between" alignItems="center" flex={1}>
+              <AlertText color="#fca5a5" size="xs" flex={1} mr="$2">
+                ⚠️ {loadError}
+              </AlertText>
+              <Button size="xs" variant="solid" action="negative" bg="#dc2626" borderRadius="$md" onPress={loadNotes}>
+                <ButtonText color="#ffffff" fontSize="$2xs">Coba Lagi</ButtonText>
+              </Button>
+            </HStack>
+          </Alert>
         )}
 
         {/* Custom TurboModule Native Security Diagnostic Card */}
-        <View style={styles.securityCard}>
-          <View style={styles.securityHeader}>
-            <View style={styles.securityTitleRow}>
-              <Text style={styles.securityIcon}>🛡️</Text>
-              <Text style={styles.securityTitle}>Native Security Status</Text>
-            </View>
-            <View style={styles.turboBadgeContainer}>
-              <Text style={styles.turboBadgeText}>JSI TURBOMODULE</Text>
-            </View>
-          </View>
+        <Card
+          size="md"
+          variant="elevated"
+          bg="#131e32"
+          borderColor="#1e3a8a"
+          borderWidth={1}
+          borderRadius="$2xl"
+          p="$4">
+          <VStack space="sm">
+            <HStack justifyContent="space-between" alignItems="center">
+              <HStack space="xs" alignItems="center">
+                <Text fontSize="$lg">🛡️</Text>
+                <Heading size="sm" color="#f8fafc" fontWeight="$bold">
+                  Native Security Status
+                </Heading>
+              </HStack>
+              <Badge size="sm" variant="solid" action="info" bg="#0369a1" borderRadius="$md">
+                <BadgeText color="#e0f2fe" fontSize="$2xs" fontWeight="$bold">
+                  JSI TURBOMODULE
+                </BadgeText>
+              </Badge>
+            </HStack>
 
-          <Text style={styles.securityDesc}>
-            Status hardware & sistem keamanan Android dipanggil langsung melalui C++ JSI tanpa async bridge.
-          </Text>
+            <Text size="xs" color="#94a3b8" lineHeight="$xs">
+              Status hardware & sistem keamanan Android dipanggil langsung melalui C++ JSI tanpa async bridge.
+            </Text>
 
-          <View style={styles.securityGrid}>
-            <View style={styles.securityRow}>
-              <Text style={styles.securityLabel}>Tingkat Keamanan:</Text>
-              <View
-                style={[
-                  styles.levelBadge,
-                  securityStatus?.securityLevel === 'HIGH'
-                    ? styles.levelHigh
-                    : securityStatus?.securityLevel === 'MEDIUM'
-                    ? styles.levelMedium
-                    : styles.levelLow,
-                ]}>
-                <Text style={styles.levelText}>
-                  {securityStatus?.securityLevel || 'CHECKING...'}
-                </Text>
-              </View>
-            </View>
+            {/* Grid Detail */}
+            <Box bg="#0f172a" borderRadius="$xl" p="$3" borderColor="#1e293b" borderWidth={1}>
+              <VStack space="xs">
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text size="xs" color="#cbd5e1">Tingkat Keamanan:</Text>
+                  <Badge
+                    size="sm"
+                    variant="solid"
+                    bg={
+                      securityStatus?.securityLevel === 'HIGH'
+                        ? '#064e3b'
+                        : securityStatus?.securityLevel === 'MEDIUM'
+                        ? '#78350f'
+                        : '#7f1d1d'
+                    }
+                    borderRadius="$sm">
+                    <BadgeText color="#ffffff" fontSize="$2xs" fontWeight="$bold">
+                      {securityStatus?.securityLevel || 'CHECKING...'}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
 
-            <View style={styles.securityRow}>
-              <Text style={styles.securityLabel}>Kunci Layar (PIN/Biometrik):</Text>
-              <Text
-                style={[
-                  styles.statusVal,
-                  securityStatus?.isDeviceSecure
-                    ? styles.statusSuccess
-                    : styles.statusWarning,
-                ]}>
-                {securityStatus?.isDeviceSecure ? 'AKTIF ✅' : 'TIDAK AKTIF ⚠️'}
-              </Text>
-            </View>
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text size="xs" color="#cbd5e1">Kunci Layar (PIN/Biometrik):</Text>
+                  <Text
+                    size="xs"
+                    fontWeight="$bold"
+                    color={securityStatus?.isDeviceSecure ? '#34d399' : '#fbbf24'}>
+                    {securityStatus?.isDeviceSecure ? 'AKTIF ✅' : 'TIDAK AKTIF ⚠️'}
+                  </Text>
+                </HStack>
 
-            <View style={styles.securityRow}>
-              <Text style={styles.securityLabel}>Hardware Keystore (TEE):</Text>
-              <Text
-                style={[
-                  styles.statusVal,
-                  securityStatus?.hasHardwareKeystore
-                    ? styles.statusSuccess
-                    : styles.statusWarning,
-                ]}>
-                {securityStatus?.hasHardwareKeystore
-                  ? 'DIDUKUNG 🔐'
-                  : 'SOFTWARE-ONLY ⚠️'}
-              </Text>
-            </View>
-          </View>
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text size="xs" color="#cbd5e1">Hardware Keystore (TEE):</Text>
+                  <Text
+                    size="xs"
+                    fontWeight="$bold"
+                    color={securityStatus?.hasHardwareKeystore ? '#34d399' : '#fbbf24'}>
+                    {securityStatus?.hasHardwareKeystore ? 'DIDUKUNG 🔐' : 'SOFTWARE-ONLY ⚠️'}
+                  </Text>
+                </HStack>
+              </VStack>
+            </Box>
 
-          <TouchableOpacity
-            style={styles.recheckBtn}
-            onPress={loadSecurityDiagnostics}
-            disabled={checkingSecurity}>
-            {checkingSecurity ? (
-              <ActivityIndicator size="small" color="#38bdf8" />
-            ) : (
-              <Text style={styles.recheckBtnText}>🔄 Re-check via JSI</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            <Button
+              size="xs"
+              variant="link"
+              action="primary"
+              onPress={loadSecurityDiagnostics}
+              isDisabled={checkingSecurity}
+              alignSelf="center">
+              {checkingSecurity ? (
+                <ButtonSpinner color="#38bdf8" mr="$1" />
+              ) : null}
+              <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
+                🔄 Re-check via JSI Direct Call
+              </ButtonText>
+            </Button>
+          </VStack>
+        </Card>
 
-        {/* Top Action Bar */}
-        <View style={styles.actionBar}>
-          <View style={styles.titleCol}>
-            <Text style={styles.sectionTitle}>Daftar Catatan</Text>
-            <Text style={styles.sectionSubtitle}>
+        {/* Section Action Bar */}
+        <HStack justifyContent="space-between" alignItems="center" py="$2">
+          <VStack>
+            <Heading size="md" color="#f1f5f9" fontWeight="$bold">
+              Daftar Catatan
+            </Heading>
+            <Text size="xs" color="#94a3b8">
               {notes.length} catatan terenkripsi (AES)
             </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.addBtn}
+          </VStack>
+          <Button
+            size="sm"
+            variant="solid"
+            action="primary"
+            bg="#0284c7"
+            borderRadius="$xl"
             onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.addBtnText}>+ Tambah</Text>
-          </TouchableOpacity>
-        </View>
+            <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$xs">
+              + Tambah
+            </ButtonText>
+          </Button>
+        </HStack>
 
         {/* Stress Test & Performance Control Card */}
-        <View style={styles.stressCard}>
-          <View style={styles.stressHeader}>
-            <Text style={styles.stressTitle}>🚀 Fabric FlatList Stress-Test</Text>
-            <Text style={styles.stressBadge}>FASE 6</Text>
-          </View>
-          <Text style={styles.stressDesc}>
-            Uji performa Fabric UI recycling dengan me-render ratusan catatan terenkripsi AES secara instan.
-          </Text>
+        <Card
+          size="md"
+          variant="elevated"
+          bg="#1e293b"
+          borderColor="#334155"
+          borderWidth={1}
+          borderRadius="$2xl"
+          p="$4">
+          <VStack space="sm">
+            <HStack justifyContent="space-between" alignItems="center">
+              <Heading size="sm" color="#f8fafc" fontWeight="$bold">
+                🚀 Fabric FlatList Stress-Test
+              </Heading>
+              <Badge size="sm" variant="solid" action="info" bg="#0284c7" borderRadius="$sm">
+                <BadgeText color="#e0f2fe" fontSize="$2xs" fontWeight="$bold">
+                  FASE 6
+                </BadgeText>
+              </Badge>
+            </HStack>
 
-          <View style={styles.stressButtonsRow}>
-            <TouchableOpacity
-              style={[
-                styles.stressBtn,
-                generatingCount === 100 && styles.stressBtnDisabled,
-              ]}
-              disabled={generatingCount !== null}
-              onPress={() => handleGenerateStressTest(100)}>
-              {generatingCount === 100 ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.stressBtnText}>+100 Notes</Text>
-              )}
-            </TouchableOpacity>
+            <Text size="xs" color="#94a3b8" lineHeight="$xs">
+              Uji performa Fabric UI recycling dengan me-render ratusan catatan terenkripsi AES secara instan.
+            </Text>
 
-            <TouchableOpacity
-              style={[
-                styles.stressBtn,
-                styles.stressBtnPurple,
-                generatingCount === 500 && styles.stressBtnDisabled,
-              ]}
-              disabled={generatingCount !== null}
-              onPress={() => handleGenerateStressTest(500)}>
-              {generatingCount === 500 ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.stressBtnText}>+500 Notes</Text>
-              )}
-            </TouchableOpacity>
+            <HStack space="xs">
+              <Button
+                flex={1}
+                size="xs"
+                variant="solid"
+                action="primary"
+                bg="#0369a1"
+                borderRadius="$lg"
+                isDisabled={generatingCount !== null}
+                onPress={() => handleGenerateStressTest(100)}>
+                {generatingCount === 100 ? (
+                  <ButtonSpinner color="#ffffff" />
+                ) : (
+                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                    +100 Notes
+                  </ButtonText>
+                )}
+              </Button>
 
-            <TouchableOpacity
-              style={[
-                styles.stressBtn,
-                styles.stressBtnRed,
-                (generatingCount !== null || notes.length === 0) &&
-                  styles.stressBtnDisabled,
-              ]}
-              disabled={generatingCount !== null || notes.length === 0}
-              onPress={handleClearAllNotes}>
-              <Text style={styles.stressBtnText}>Bersihkan</Text>
-            </TouchableOpacity>
-          </View>
+              <Button
+                flex={1}
+                size="xs"
+                variant="solid"
+                action="primary"
+                bg="#6d28d9"
+                borderRadius="$lg"
+                isDisabled={generatingCount !== null}
+                onPress={() => handleGenerateStressTest(500)}>
+                {generatingCount === 500 ? (
+                  <ButtonSpinner color="#ffffff" />
+                ) : (
+                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                    +500 Notes
+                  </ButtonText>
+                )}
+              </Button>
 
-          {perfBenchmarkText && (
-            <View style={styles.perfResultBox}>
-              <Text style={styles.perfResultText}>{perfBenchmarkText}</Text>
-            </View>
-          )}
-        </View>
-      </View>
+              <Button
+                flex={1}
+                size="xs"
+                variant="solid"
+                action="negative"
+                bg="#991b1b"
+                borderRadius="$lg"
+                isDisabled={generatingCount !== null || notes.length === 0}
+                onPress={handleClearAllNotes}>
+                <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                  Bersihkan
+                </ButtonText>
+              </Button>
+            </HStack>
+
+            {perfBenchmarkText && (
+              <Box bg="#0f172a" borderRadius="$lg" p="$2.5" borderColor="#0284c7" borderWidth={1}>
+                <Text size="2xs" color="#38bdf8" fontWeight="$semibold">
+                  {perfBenchmarkText}
+                </Text>
+              </Box>
+            )}
+          </VStack>
+        </Card>
+      </VStack>
     ),
     [
       loadError,
@@ -417,36 +484,52 @@ export const HomeScreen: React.FC = () => {
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}>
+    <Box
+      flex={1}
+      bg="#0f172a"
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
       {/* App Bar */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Halo,</Text>
-          <Text style={styles.userName}>{user?.name || 'Pengguna'} 👋</Text>
-        </View>
+      <HStack
+        justifyContent="space-between"
+        alignItems="center"
+        px="$5"
+        pt="$3"
+        pb="$4"
+        borderBottomWidth={1}
+        borderBottomColor="#1e293b">
+        <VStack>
+          <Text size="xs" color="#94a3b8">Halo,</Text>
+          <Heading size="xl" color="#f8fafc" fontWeight="$extrabold">
+            {user?.name || 'Pengguna'} 👋
+          </Heading>
+        </VStack>
 
-        <TouchableOpacity
-          style={styles.logoutBtn}
+        <Button
+          size="sm"
+          variant="outline"
+          action="negative"
+          borderColor="#334155"
+          bg="#1e293b"
+          borderRadius="$lg"
           onPress={handleLogout}
-          disabled={loggingOut}>
+          isDisabled={loggingOut}>
           {loggingOut ? (
-            <ActivityIndicator color="#ef4444" size="small" />
-          ) : (
-            <Text style={styles.logoutText}>Logout</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+            <ButtonSpinner color="#ef4444" mr="$1" />
+          ) : null}
+          <ButtonText color="#f87171" fontSize="$xs" fontWeight="$bold">
+            Logout
+          </ButtonText>
+        </Button>
+      </HStack>
 
       {/* Main FlatList with Fabric High Performance Optimizations */}
       {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#38bdf8" />
-          <Text style={styles.loadingText}>Memuat catatan terenkripsi...</Text>
-        </View>
+        <Center flex={1}>
+          <Spinner size="large" color="#38bdf8" />
+          <Text size="xs" color="#94a3b8" mt="$2">
+            Memuat catatan terenkripsi...
+          </Text>
+        </Center>
       ) : (
         <FlatList
           data={notes}
@@ -470,14 +553,16 @@ export const HomeScreen: React.FC = () => {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📝</Text>
-              <Text style={styles.emptyTitle}>Belum Ada Catatan</Text>
-              <Text style={styles.emptySubtitle}>
+            <Center py="$10" px="$4">
+              <Text fontSize="$4xl" mb="$2">📝</Text>
+              <Heading size="md" color="#f8fafc" fontWeight="$bold" mb="$1">
+                Belum Ada Catatan
+              </Heading>
+              <Text size="xs" color="#64748b" textAlign="center" lineHeight="$sm">
                 Tekan tombol "+ Tambah" atau gunakan fitur "+100 Notes" di atas
-                untuk menguji scrolling 60/120 FPS.
+                untuk menguji scrolling 60/120 FPS dengan Gluestack UI.
               </Text>
-            </View>
+            </Center>
           }
         />
       )}
@@ -488,321 +573,14 @@ export const HomeScreen: React.FC = () => {
         onClose={() => setIsModalVisible(false)}
         onSubmit={handleCreateNote}
       />
-    </View>
+    </Box>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-  },
-  greeting: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#f8fafc',
-  },
-  logoutBtn: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  logoutText: {
-    color: '#f87171',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  listHeaderContainer: {
-    marginBottom: 8,
-  },
-  loadErrorBanner: {
-    backgroundColor: '#450a0a',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#dc2626',
-  },
-  loadErrorText: {
-    color: '#fca5a5',
-    fontSize: 12,
-    flex: 1,
-    marginRight: 8,
-  },
-  retryBtnSmall: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  retryBtnTextSmall: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  securityCard: {
-    backgroundColor: '#131e32',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#1e3a8a',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  securityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  securityTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  securityIcon: {
-    fontSize: 16,
-  },
-  securityTitle: {
-    color: '#f8fafc',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  turboBadgeContainer: {
-    backgroundColor: '#0369a1',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  turboBadgeText: {
-    color: '#e0f2fe',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  securityDesc: {
-    color: '#94a3b8',
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  securityGrid: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    padding: 12,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-  },
-  securityRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  securityLabel: {
-    color: '#cbd5e1',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  levelBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  levelHigh: {
-    backgroundColor: '#064e3b',
-  },
-  levelMedium: {
-    backgroundColor: '#78350f',
-  },
-  levelLow: {
-    backgroundColor: '#7f1d1d',
-  },
-  levelText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  statusVal: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  statusSuccess: {
-    color: '#34d399',
-  },
-  statusWarning: {
-    color: '#fbbf24',
-  },
-  recheckBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    marginTop: 10,
-  },
-  recheckBtnText: {
-    color: '#38bdf8',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  titleCol: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f1f5f9',
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 2,
-  },
-  addBtn: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 8,
-  },
-  addBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  stressCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 14,
-  },
-  stressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  stressTitle: {
-    color: '#f8fafc',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  stressBadge: {
-    backgroundColor: '#0284c7',
-    color: '#e0f2fe',
-    fontSize: 10,
-    fontWeight: '800',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  stressDesc: {
-    color: '#94a3b8',
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  stressButtonsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  stressBtn: {
-    flex: 1,
-    backgroundColor: '#0369a1',
-    paddingVertical: 9,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stressBtnPurple: {
-    backgroundColor: '#6d28d9',
-  },
-  stressBtnRed: {
-    backgroundColor: '#991b1b',
-  },
-  stressBtnDisabled: {
-    opacity: 0.5,
-  },
-  stressBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  perfResultBox: {
-    backgroundColor: '#0f172a',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#0284c7',
-  },
-  perfResultText: {
-    color: '#38bdf8',
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
-  },
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 32,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#94a3b8',
-    fontSize: 13,
-    marginTop: 10,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 18,
   },
 });
 
