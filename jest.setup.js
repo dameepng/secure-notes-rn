@@ -32,3 +32,49 @@ jest.mock('@react-native-async-storage/async-storage', () => {
     }),
   };
 });
+
+jest.mock('@gluestack-ui/themed', () => {
+  const { View, Text, TextInput, TouchableOpacity } = require('react-native');
+  return {
+    GluestackUIProvider: ({ children }: { children: React.ReactNode }) => children,
+    Box: View,
+    VStack: View,
+    HStack: View,
+    Center: View,
+    Heading: Text,
+    Text: Text,
+    Card: View,
+    Badge: View,
+    BadgeText: Text,
+    BadgeIcon: View,
+    Button: TouchableOpacity,
+    ButtonText: Text,
+    ButtonSpinner: View,
+    ButtonIcon: View,
+    Input: View,
+    InputField: TextInput,
+    Textarea: View,
+    TextareaInput: TextInput,
+    FormControl: View,
+    FormControlLabel: View,
+    FormControlLabelText: Text,
+    FormControlError: View,
+    FormControlErrorText: Text,
+    Alert: View,
+    AlertText: Text,
+    Spinner: View,
+    Divider: View,
+    Modal: ({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) =>
+      isOpen ? children : null,
+    ModalBackdrop: View,
+    ModalContent: View,
+    ModalHeader: View,
+    ModalCloseButton: TouchableOpacity,
+    ModalBody: View,
+    ModalFooter: View,
+  };
+});
+
+jest.mock('@gluestack-ui/config', () => ({
+  config: {},
+}));

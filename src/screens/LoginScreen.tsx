@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Box,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  Card,
+  Badge,
+  BadgeText,
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  Input,
+  InputField,
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  Alert,
+  AlertText,
+  Center,
+} from '@gluestack-ui/themed';
+
 import { useAuth } from '../navigation/AuthContext';
 import { ApiError } from '../types/api';
 import { useToast } from '../components/ToastContext';
@@ -85,237 +99,206 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>FASE 8 — ERROR HANDLING & UX</Text>
-          </View>
-          <Text style={styles.appName}>SecureNotes</Text>
-          <Text style={styles.appTagline}>
-            Aplikasi Catatan Pribadi Terenkripsi AES-256
-          </Text>
-        </View>
+    <Box
+      flex={1}
+      bg="#0f172a"
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled">
+          {/* Header Brand */}
+          <Center mb="$8">
+            <Badge
+              size="md"
+              variant="solid"
+              action="info"
+              bg="#0369a1"
+              borderRadius="$full"
+              px="$3"
+              py="$1"
+              mb="$3">
+              <BadgeText color="#e0f2fe" fontWeight="$bold" fontSize="$xs">
+                GLUESTACK UI • NEW ARCHITECTURE
+              </BadgeText>
+            </Badge>
 
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Masuk ke Akun</Text>
-          <Text style={styles.formSubtitle}>
-            Gunakan akun dummy untuk memulai sesi terenkripsi Anda
-          </Text>
-
-          {generalError && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{generalError}</Text>
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[styles.input, emailError && styles.inputError]}
-              placeholder="contoh@email.com"
-              placeholderTextColor="#64748b"
-              value={email}
-              onChangeText={text => {
-                setEmail(text);
-                if (emailError) {
-                  setEmailError(null);
-                }
-              }}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
-            {emailError && <Text style={styles.fieldErrorText}>{emailError}</Text>}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={[styles.input, passwordError && styles.inputError]}
-              placeholder="Minimal 6 karakter"
-              placeholderTextColor="#64748b"
-              value={password}
-              onChangeText={text => {
-                setPassword(text);
-                if (passwordError) {
-                  setPasswordError(null);
-                }
-              }}
-              secureTextEntry
-              editable={!loading}
-            />
-            {passwordError && (
-              <Text style={styles.fieldErrorText}>{passwordError}</Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.loginBtn, loading && styles.btnDisabled]}
-            onPress={handleLogin}
-            disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.loginBtnText}>Masuk</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickFillBtn}
-            onPress={handleQuickFill}
-            disabled={loading}>
-            <Text style={styles.quickFillText}>
-              ⚡ Isi Otomatis Akun Demo (Quick Fill)
+            <Heading size="3xl" color="#f8fafc" fontWeight="$extrabold" textAlign="center">
+              SecureNotes
+            </Heading>
+            <Text size="sm" color="#94a3b8" mt="$1" textAlign="center">
+              Aplikasi Catatan Pribadi Terenkripsi AES-256
             </Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.footerNote}>
-          <Text style={styles.footerText}>
-            🔒 Sesi login dan token JWT disimpan lokal via AsyncStorage terenkripsi.
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <HStack space="xs" mt="$3">
+              <Badge size="sm" variant="outline" borderColor="#334155" borderRadius="$md">
+                <BadgeText color="#38bdf8" fontSize="$2xs">Fabric UI</BadgeText>
+              </Badge>
+              <Badge size="sm" variant="outline" borderColor="#334155" borderRadius="$md">
+                <BadgeText color="#38bdf8" fontSize="$2xs">TurboModule JSI</BadgeText>
+              </Badge>
+              <Badge size="sm" variant="outline" borderColor="#334155" borderRadius="$md">
+                <BadgeText color="#38bdf8" fontSize="$2xs">AES-256</BadgeText>
+              </Badge>
+            </HStack>
+          </Center>
+
+          {/* Gluestack Card Form */}
+          <Card
+            size="md"
+            variant="elevated"
+            bg="#1e293b"
+            borderColor="#334155"
+            borderWidth={1}
+            borderRadius="$2xl"
+            p="$6">
+            <VStack space="lg">
+              <VStack space="xs">
+                <Heading size="lg" color="#f8fafc" fontWeight="$bold">
+                  Masuk ke Akun
+                </Heading>
+                <Text size="xs" color="#94a3b8">
+                  Gunakan akun dummy untuk memulai sesi terenkripsi Anda
+                </Text>
+              </VStack>
+
+              {generalError && (
+                <Alert action="error" variant="accent" bg="#450a0a" borderColor="#ef4444" borderRadius="$lg" p="$3">
+                  <AlertText color="#fca5a5" size="xs">
+                    {generalError}
+                  </AlertText>
+                </Alert>
+              )}
+
+              {/* FormControl: Email */}
+              <FormControl isInvalid={Boolean(emailError)} isRequired>
+                <FormControlLabel mb="$1">
+                  <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                    Email
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Input
+                  variant="outline"
+                  size="md"
+                  bg="#0f172a"
+                  borderColor={emailError ? '#ef4444' : '#334155'}
+                  borderRadius="$xl">
+                  <InputField
+                    placeholder="contoh@email.com"
+                    placeholderTextColor="#64748b"
+                    color="#f8fafc"
+                    value={email}
+                    onChangeText={(text: string) => {
+                      setEmail(text);
+                      if (emailError) {
+                        setEmailError(null);
+                      }
+                    }}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!loading}
+                  />
+                </Input>
+                {emailError && (
+                  <FormControlError mt="$1">
+                    <FormControlErrorText color="#f87171" fontSize="$2xs">
+                      {emailError}
+                    </FormControlErrorText>
+                  </FormControlError>
+                )}
+              </FormControl>
+
+              {/* FormControl: Password */}
+              <FormControl isInvalid={Boolean(passwordError)} isRequired>
+                <FormControlLabel mb="$1">
+                  <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                    Password
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Input
+                  variant="outline"
+                  size="md"
+                  bg="#0f172a"
+                  borderColor={passwordError ? '#ef4444' : '#334155'}
+                  borderRadius="$xl">
+                  <InputField
+                    placeholder="Minimal 6 karakter"
+                    placeholderTextColor="#64748b"
+                    color="#f8fafc"
+                    value={password}
+                    onChangeText={(text: string) => {
+                      setPassword(text);
+                      if (passwordError) {
+                        setPasswordError(null);
+                      }
+                    }}
+                    secureTextEntry
+                    editable={!loading}
+                  />
+                </Input>
+                {passwordError && (
+                  <FormControlError mt="$1">
+                    <FormControlErrorText color="#f87171" fontSize="$2xs">
+                      {passwordError}
+                    </FormControlErrorText>
+                  </FormControlError>
+                )}
+              </FormControl>
+
+              {/* Gluestack Submit Button */}
+              <Button
+                size="lg"
+                variant="solid"
+                action="primary"
+                bg="#0284c7"
+                borderRadius="$xl"
+                onPress={handleLogin}
+                isDisabled={loading}
+                mt="$2">
+                {loading ? (
+                  <ButtonSpinner color="#ffffff" mr="$2" />
+                ) : null}
+                <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
+                  {loading ? 'Memverifikasi...' : 'Masuk ke Aplikasi'}
+                </ButtonText>
+              </Button>
+
+              {/* Quick Fill Button */}
+              <Button
+                size="sm"
+                variant="link"
+                action="secondary"
+                onPress={handleQuickFill}
+                isDisabled={loading}>
+                <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
+                  ⚡ Isi Otomatis Akun Demo (Quick Fill)
+                </ButtonText>
+              </Button>
+            </VStack>
+          </Card>
+
+          {/* Footer Note */}
+          <Center mt="$8">
+            <Text size="xs" color="#64748b" textAlign="center" lineHeight="$sm">
+              🔒 Sesi login dan token JWT disimpan lokal via AsyncStorage terenkripsi.
+            </Text>
+          </Center>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Box>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
-    backgroundColor: '#0f172a',
   },
   scrollContent: {
     padding: 24,
     justifyContent: 'center',
     flexGrow: 1,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  badgeContainer: {
-    backgroundColor: '#0369a1',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  badgeText: {
-    color: '#e0f2fe',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#f8fafc',
-  },
-  appTagline: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 6,
-  },
-  formCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  formTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#f8fafc',
-  },
-  formSubtitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 4,
-    marginBottom: 20,
-  },
-  errorBanner: {
-    backgroundColor: '#450a0a',
-    borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#fca5a5',
-    fontSize: 13,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#334155',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 14,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  fieldErrorText: {
-    color: '#f87171',
-    fontSize: 11,
-    marginTop: 4,
-  },
-  loginBtn: {
-    backgroundColor: '#0284c7',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  loginBtnText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  quickFillBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  quickFillText: {
-    color: '#38bdf8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  footerNote: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#64748b',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
   },
 });
 

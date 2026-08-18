@@ -1,15 +1,34 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
-  StyleSheet,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Heading,
   Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+  FormControlError,
+  FormControlErrorText,
+  Input,
+  InputField,
+  Textarea,
+  TextareaInput,
+  Button,
+  ButtonText,
+  ButtonSpinner,
+  Badge,
+  BadgeText,
+  Alert,
+  AlertText,
+  VStack,
+  HStack,
+  Box,
+} from '@gluestack-ui/themed';
 import { NoteInput } from '../types/note';
 
 interface AddNoteModalProps {
@@ -68,208 +87,149 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
 
   return (
     <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={handleCancel}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>➕ Tambah Catatan Baru</Text>
-            <TouchableOpacity onPress={handleCancel} disabled={submitting}>
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
-          </View>
+      isOpen={visible}
+      onClose={handleCancel}
+      size="lg">
+      <ModalBackdrop bg="rgba(0, 0, 0, 0.75)" />
+      <ModalContent
+        bg="#1e293b"
+        borderColor="#334155"
+        borderWidth={1}
+        borderRadius="$2xl"
+        p="$4">
+        {/* Header */}
+        <ModalHeader borderBottomColor="#334155" borderBottomWidth={1} pb="$3">
+          <HStack alignItems="center" space="xs" flex={1}>
+            <Heading size="md" color="#f8fafc" fontWeight="$bold">
+              ➕ Tambah Catatan Baru
+            </Heading>
+          </HStack>
+          <ModalCloseButton onPress={handleCancel} isDisabled={submitting}>
+            <Text color="#94a3b8" fontSize="$md">✕</Text>
+          </ModalCloseButton>
+        </ModalHeader>
 
-          {errorMessage && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            </View>
-          )}
+        {/* Body */}
+        <ModalBody py="$4">
+          <VStack space="md">
+            {errorMessage && (
+              <Alert action="error" variant="accent" bg="#450a0a" borderColor="#ef4444" borderRadius="$lg" p="$3">
+                <AlertText color="#fca5a5" size="xs">
+                  {errorMessage}
+                </AlertText>
+              </Alert>
+            )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Judul Catatan *</Text>
-            <TextInput
-              style={[styles.input, titleError && styles.inputError]}
-              placeholder="Contoh: Ide Project React Native"
-              placeholderTextColor="#64748b"
-              value={title}
-              onChangeText={text => {
-                setTitle(text);
-                if (titleError) {
-                  setTitleError(null);
-                }
-              }}
-              editable={!submitting}
-            />
-            {titleError && <Text style={styles.fieldErrorText}>{titleError}</Text>}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Isi Catatan (Akan Dienkripsi AES)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Tulis detail catatan Anda di sini..."
-              placeholderTextColor="#64748b"
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-              editable={!submitting}
-            />
-          </View>
-
-          {submitting && (
-            <View style={styles.encryptingBanner}>
-              <Text style={styles.encryptingText}>🔒 Mengenkripsi data dengan AES-256...</Text>
-            </View>
-          )}
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={handleCancel}
-              disabled={submitting}>
-              <Text style={styles.cancelBtnText}>Batal</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.saveBtn, submitting && styles.btnDisabled]}
-              onPress={handleSave}
-              disabled={submitting}>
-              {submitting ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <Text style={styles.saveBtnText}>Simpan Enkripsi</Text>
+            {/* Form Title */}
+            <FormControl isInvalid={Boolean(titleError)} isRequired>
+              <FormControlLabel mb="$1">
+                <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                  Judul Catatan *
+                </FormControlLabelText>
+              </FormControlLabel>
+              <Input
+                variant="outline"
+                size="md"
+                bg="#0f172a"
+                borderColor={titleError ? '#ef4444' : '#334155'}
+                borderRadius="$xl">
+                <InputField
+                  placeholder="Contoh: Ide Project React Native"
+                  placeholderTextColor="#64748b"
+                  color="#f8fafc"
+                  value={title}
+                  onChangeText={(text: string) => {
+                    setTitle(text);
+                    if (titleError) {
+                      setTitleError(null);
+                    }
+                  }}
+                  editable={!submitting}
+                />
+              </Input>
+              {titleError && (
+                <FormControlError mt="$1">
+                  <FormControlErrorText color="#f87171" fontSize="$2xs">
+                    {titleError}
+                  </FormControlErrorText>
+                </FormControlError>
               )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+            </FormControl>
+
+            {/* Form Content */}
+            <FormControl>
+              <FormControlLabel mb="$1">
+                <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                  Isi Catatan (Akan Dienkripsi AES-256)
+                </FormControlLabelText>
+              </FormControlLabel>
+              <Textarea
+                size="md"
+                bg="#0f172a"
+                borderColor="#334155"
+                borderRadius="$xl"
+                h={120}>
+                <TextareaInput
+                  placeholder="Tulis detail catatan rahasia Anda di sini..."
+                  placeholderTextColor="#64748b"
+                  color="#f8fafc"
+                  value={content}
+                  onChangeText={(text: string) => setContent(text)}
+                  editable={!submitting}
+                />
+              </Textarea>
+            </FormControl>
+
+            {submitting && (
+              <Box bg="#064e3b" p="$2" borderRadius="$lg" alignItems="center">
+                <HStack space="xs" alignItems="center">
+                  <Badge size="sm" variant="solid" action="success" bg="#059669" borderRadius="$full">
+                    <BadgeText color="#ffffff" fontSize="$2xs">AES-256 GCM</BadgeText>
+                  </Badge>
+                  <Text size="xs" color="#a7f3d0" fontWeight="$semibold">
+                    Mengenkripsi payload catatan...
+                  </Text>
+                </HStack>
+              </Box>
+            )}
+          </VStack>
+        </ModalBody>
+
+        {/* Footer Buttons */}
+        <ModalFooter borderTopColor="#334155" borderTopWidth={1} pt="$3">
+          <HStack space="sm" flex={1}>
+            <Button
+              flex={1}
+              size="md"
+              variant="outline"
+              action="secondary"
+              borderColor="#475569"
+              borderRadius="$xl"
+              onPress={handleCancel}
+              isDisabled={submitting}>
+              <ButtonText color="#cbd5e1" fontSize="$sm">Batal</ButtonText>
+            </Button>
+            <Button
+              flex={1}
+              size="md"
+              variant="solid"
+              action="primary"
+              bg="#0284c7"
+              borderRadius="$xl"
+              onPress={handleSave}
+              isDisabled={submitting}>
+              {submitting ? (
+                <ButtonSpinner color="#ffffff" mr="$1" />
+              ) : null}
+              <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
+                {submitting ? 'Menyimpan...' : 'Simpan Enkripsi'}
+              </ButtonText>
+            </Button>
+          </HStack>
+        </ModalFooter>
+      </ModalContent>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#1e293b',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    borderTopWidth: 1,
-    borderColor: '#334155',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f8fafc',
-  },
-  closeText: {
-    fontSize: 18,
-    color: '#94a3b8',
-    padding: 4,
-  },
-  errorBanner: {
-    backgroundColor: '#450a0a',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#ef4444',
-  },
-  errorText: {
-    color: '#fca5a5',
-    fontSize: 12,
-  },
-  inputGroup: {
-    marginBottom: 14,
-  },
-  label: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#334155',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#f8fafc',
-    fontSize: 14,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  fieldErrorText: {
-    color: '#f87171',
-    fontSize: 11,
-    marginTop: 4,
-  },
-  textArea: {
-    minHeight: 100,
-  },
-  encryptingBanner: {
-    backgroundColor: '#064e3b',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  encryptingText: {
-    color: '#a7f3d0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  cancelBtn: {
-    flex: 1,
-    backgroundColor: '#334155',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    color: '#cbd5e1',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  saveBtn: {
-    flex: 1,
-    backgroundColor: '#0284c7',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  saveBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-});
 
 export default AddNoteModal;
