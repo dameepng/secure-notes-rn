@@ -6,6 +6,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  AlertOctagon,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react-native';
 
 interface Props {
   children: ReactNode;
@@ -56,7 +62,9 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.card}>
-            <Text style={styles.icon}>💥</Text>
+            <View style={styles.iconContainer}>
+              <AlertOctagon size={48} color="#ef4444" strokeWidth={1.5} />
+            </View>
             <Text style={styles.title}>Terjadi Kesalahan Aplikasi</Text>
             <Text style={styles.subtitle}>
               Komponen aplikasi mengalami kendala tak terduga. Silakan coba muat ulang komponen di bawah ini.
@@ -71,15 +79,21 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
 
             <TouchableOpacity style={styles.retryBtn} onPress={this.handleRetry}>
-              <Text style={styles.retryBtnText}>🔄 Coba Muat Ulang</Text>
+              <RefreshCw size={16} color="#ffffff" style={styles.btnIcon} />
+              <Text style={styles.retryBtnText}>Coba Muat Ulang</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.detailsToggle}
               onPress={this.toggleDetails}>
               <Text style={styles.detailsToggleText}>
-                {this.state.showDetails ? 'Sembunyikan Detail 🔼' : 'Lihat Detail Error 🔽'}
+                {this.state.showDetails ? 'Sembunyikan Detail' : 'Lihat Detail Error'}
               </Text>
+              {this.state.showDetails ? (
+                <ChevronUp size={14} color="#64748b" style={styles.toggleIcon} />
+              ) : (
+                <ChevronDown size={14} color="#64748b" style={styles.toggleIcon} />
+              )}
             </TouchableOpacity>
 
             {this.state.showDetails && this.state.error?.stack && (
@@ -116,9 +130,8 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     alignItems: 'center',
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: 12,
+  iconContainer: {
+    marginBottom: 16,
   },
   title: {
     fontSize: 20,
@@ -154,8 +167,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 10,
     width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
+  },
+  btnIcon: {
+    marginRight: 8,
   },
   retryBtnText: {
     color: '#ffffff',
@@ -164,11 +182,16 @@ const styles = StyleSheet.create({
   },
   detailsToggle: {
     padding: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   detailsToggleText: {
     color: '#64748b',
     fontSize: 12,
     fontWeight: '600',
+  },
+  toggleIcon: {
+    marginLeft: 4,
   },
   stackTraceContainer: {
     maxHeight: 160,

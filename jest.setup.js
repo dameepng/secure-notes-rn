@@ -78,3 +78,19 @@ jest.mock('@gluestack-ui/themed', () => {
 jest.mock('@gluestack-ui/config', () => ({
   config: {},
 }));
+
+jest.mock('lucide-react-native', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const createMockIcon = (name: string) => {
+    const MockIcon = (props: any) => React.createElement(View, { ...props, testID: `icon-${name}` });
+    MockIcon.displayName = name;
+    return MockIcon;
+  };
+  return new Proxy(
+    {},
+    {
+      get: (_target, prop: string) => createMockIcon(prop),
+    },
+  );
+});

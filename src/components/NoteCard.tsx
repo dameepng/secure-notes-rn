@@ -8,10 +8,10 @@ import {
   Badge,
   BadgeText,
   Button,
-  ButtonText,
   Box,
   Divider,
 } from '@gluestack-ui/themed';
+import { Trash2, Lock } from 'lucide-react-native';
 import { Note } from '../types/note';
 
 interface NoteCardProps {
@@ -50,9 +50,9 @@ const NoteCardComponent: React.FC<NoteCardProps> = ({ note, onDelete }) => {
             size="xs"
             variant="link"
             action="negative"
-            p="$1"
+            p="$1.5"
             onPress={() => onDelete(note.id)}>
-            <ButtonText fontSize="$xs">🗑️</ButtonText>
+            <Trash2 size={16} color="#ef4444" />
           </Button>
         </HStack>
 
@@ -78,9 +78,12 @@ const NoteCardComponent: React.FC<NoteCardProps> = ({ note, onDelete }) => {
             borderRadius="$xs"
             px="$2"
             py="$0.5">
-            <BadgeText color="#a7f3d0" fontSize="$2xs" fontWeight="$bold">
-              🔒 AES-256 Encrypted
-            </BadgeText>
+            <HStack space="xs" alignItems="center">
+              <Lock size={10} color="#a7f3d0" />
+              <BadgeText color="#a7f3d0" fontSize="$2xs" fontWeight="$bold">
+                AES-256 Encrypted
+              </BadgeText>
+            </HStack>
           </Badge>
         </HStack>
       </VStack>

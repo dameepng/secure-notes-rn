@@ -51,7 +51,7 @@ export async function getNotes(userId?: string): Promise<Note[]> {
           decryptedContent = decrypt(item.content);
         } catch (error) {
           console.warn(`Failed to decrypt note ${item.id}:`, error);
-          decryptedContent = '⚠️ [Terkunci: Gagal mendekripsi atau data korup]';
+          decryptedContent = '[Terkunci: Gagal mendekripsi atau data korup]';
         }
       }
 
