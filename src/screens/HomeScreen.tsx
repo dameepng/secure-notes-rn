@@ -22,6 +22,7 @@ import {
 import { Note, NoteInput } from '../types/note';
 import NoteCard from '../components/NoteCard';
 import AddNoteModal from '../components/AddNoteModal';
+import { checkDeviceSecurityStatus, SecurityStatus } from '../native';
 
 const SAMPLE_TOPICS = [
   'Kunci Enkripsi Server API',
@@ -39,7 +40,7 @@ const SAMPLE_CONTENTS = [
   'Arsitektur New Arch menggunakan Fabric UI Manager untuk rendering C++ langsung tanpa bridge.',
   'Benchmarking FlatList dengan windowSize=5 dan removeClippedSubviews=true menunjukkan FPS 60/120 stabil.',
   'Gunakan keyExtractor yang stabil dan React.memo pada item component untuk meminimalisir overhead render.',
-  'Koneksi TurboModules berjalan sinkron dan langsung mengeksekusi C++ native methods.',
+  'Koneksi TurboModules berjalan sinkron dan langsung mengeksekusi C++ native methods via JSI.',
 ];
 
 export const HomeScreen: React.FC = () => {
@@ -53,6 +54,10 @@ export const HomeScreen: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [generatingCount, setGeneratingCount] = useState<number | null>(null);
   const [perfBenchmarkText, setPerfBenchmarkText] = useState<string | null>(null);
+
+  // TurboModule Security Checker State
+  const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null);
+  const [checkingSecurity, setCheckingSecurity] = useState<boolean>(false);
 
   const userId = user?.id || 'guest_user';
 
@@ -68,14 +73,28 @@ export const HomeScreen: React.FC = () => {
     }
   }, [user?.id]);
 
+  const loadSecurityDiagnostics = useCallback(async () => {
+    setCheckingSecurity(true);
+    try {
+      const status = await checkDeviceSecurityStatus();
+      setSecurityStatus(status);
+    } catch (error) {
+      console.error('Failed to load native security status:', error);
+    } finally {
+      setCheckingSecurity(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadNotes();
-  }, [loadNotes]);
+    loadSecurityDiagnostics();
+  }, [loadNotes, loadSecurityDiagnostics]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     loadNotes();
-  }, [loadNotes]);
+    loadSecurityDiagnostics();
+  }, [loadNotes, loadSecurityDiagnostics]);
 
   const handleCreateNote = async (input: NoteInput) => {
     const newNote = await createNote(input, userId);
@@ -202,6 +221,81 @@ export const HomeScreen: React.FC = () => {
   const headerComponent = useMemo(
     () => (
       <View style={styles.listHeaderContainer}>
+        {/* Custom TurboModule Native Security Diagnostic Card */}
+        <View style={styles.securityCard}>
+          <View style={styles.securityHeader}>
+            <View style={styles.securityTitleRow}>
+              <Text style={styles.securityIcon}>🛡️</Text>
+              <Text style={styles.securityTitle}>Native Security Status</Text>
+            </View>
+            <View style={styles.turboBadgeContainer}>
+              <Text style={styles.turboBadgeText}>JSI TURBOMODULE</Text>
+            </View>
+          </View>
+
+          <Text style={styles.securityDesc}>
+            Status hardware & sistem keamanan Android dipanggil langsung melalui C++ JSI tanpa async bridge.
+          </Text>
+
+          <View style={styles.securityGrid}>
+            <View style={styles.securityRow}>
+              <Text style={styles.securityLabel}>Tingkat Keamanan:</Text>
+              <View
+                style={[
+                  styles.levelBadge,
+                  securityStatus?.securityLevel === 'HIGH'
+                    ? styles.levelHigh
+                    : securityStatus?.securityLevel === 'MEDIUM'
+                    ? styles.levelMedium
+                    : styles.levelLow,
+                ]}>
+                <Text style={styles.levelText}>
+                  {securityStatus?.securityLevel || 'CHECKING...'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.securityRow}>
+              <Text style={styles.securityLabel}>Kunci Layar (PIN/Biometrik):</Text>
+              <Text
+                style={[
+                  styles.statusVal,
+                  securityStatus?.isDeviceSecure
+                    ? styles.statusSuccess
+                    : styles.statusWarning,
+                ]}>
+                {securityStatus?.isDeviceSecure ? 'AKTIF ✅' : 'TIDAK AKTIF ⚠️'}
+              </Text>
+            </View>
+
+            <View style={styles.securityRow}>
+              <Text style={styles.securityLabel}>Hardware Keystore (TEE):</Text>
+              <Text
+                style={[
+                  styles.statusVal,
+                  securityStatus?.hasHardwareKeystore
+                    ? styles.statusSuccess
+                    : styles.statusWarning,
+                ]}>
+                {securityStatus?.hasHardwareKeystore
+                  ? 'DIDUKUNG 🔐'
+                  : 'SOFTWARE-ONLY ⚠️'}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.recheckBtn}
+            onPress={loadSecurityDiagnostics}
+            disabled={checkingSecurity}>
+            {checkingSecurity ? (
+              <ActivityIndicator size="small" color="#38bdf8" />
+            ) : (
+              <Text style={styles.recheckBtnText}>🔄 Re-check via JSI</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
         {/* Top Action Bar */}
         <View style={styles.actionBar}>
           <View style={styles.titleCol}>
@@ -279,6 +373,9 @@ export const HomeScreen: React.FC = () => {
       </View>
     ),
     [
+      securityStatus,
+      checkingSecurity,
+      loadSecurityDiagnostics,
       notes.length,
       generatingCount,
       perfBenchmarkText,
@@ -402,6 +499,110 @@ const styles = StyleSheet.create({
   },
   listHeaderContainer: {
     marginBottom: 8,
+  },
+  securityCard: {
+    backgroundColor: '#131e32',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1e3a8a',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  securityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  securityTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  securityIcon: {
+    fontSize: 16,
+  },
+  securityTitle: {
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  turboBadgeContainer: {
+    backgroundColor: '#0369a1',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  turboBadgeText: {
+    color: '#e0f2fe',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  securityDesc: {
+    color: '#94a3b8',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  securityGrid: {
+    backgroundColor: '#0f172a',
+    borderRadius: 10,
+    padding: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+  securityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  securityLabel: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  levelBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  levelHigh: {
+    backgroundColor: '#064e3b',
+  },
+  levelMedium: {
+    backgroundColor: '#78350f',
+  },
+  levelLow: {
+    backgroundColor: '#7f1d1d',
+  },
+  levelText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  statusVal: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  statusSuccess: {
+    color: '#34d399',
+  },
+  statusWarning: {
+    color: '#fbbf24',
+  },
+  recheckBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginTop: 10,
+  },
+  recheckBtnText: {
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: '600',
   },
   actionBar: {
     flexDirection: 'row',
