@@ -37,7 +37,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
       <View style={styles.footerRow}>
         <Text style={styles.dateText}>{formattedDate}</Text>
         <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>Plain Text</Text>
+          <Text style={styles.statusText}>🔒 AES-256 Encrypted</Text>
         </View>
       </View>
     </View>
@@ -91,17 +91,17 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   statusBadge: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#064e3b',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#059669',
   },
   statusText: {
-    color: '#94a3b8',
+    color: '#a7f3d0',
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 
