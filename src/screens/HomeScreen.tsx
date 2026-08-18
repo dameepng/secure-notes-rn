@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  ScrollView,
+  FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,11 +11,69 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../navigation/AuthContext';
+import { createNote, deleteNote, getNotes } from '../storage/noteStorage';
+import { Note, NoteInput } from '../types/note';
+import NoteCard from '../components/NoteCard';
+import AddNoteModal from '../components/AddNoteModal';
 
 export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
-  const [loggingOut, setLoggingOut] = useState(false);
+
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  const loadNotes = useCallback(async () => {
+    try {
+      const data = await getNotes(user?.id);
+      setNotes(data);
+    } catch (error) {
+      console.error('Failed to load notes:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadNotes();
+  };
+
+  const handleCreateNote = async (input: NoteInput) => {
+    const userId = user?.id || 'guest_user';
+    const newNote = await createNote(input, userId);
+    setNotes(prev => [newNote, ...prev]);
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    Alert.alert(
+      'Hapus Catatan',
+      'Apakah Anda yakin ingin menghapus catatan ini?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteNote(noteId);
+              setNotes(prev => prev.filter(n => n.id !== noteId));
+            } catch (error) {
+              Alert.alert('Error', 'Gagal menghapus catatan.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar?', [
@@ -40,60 +99,81 @@ export const HomeScreen: React.FC = () => {
         styles.container,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Halo,</Text>
-            <Text style={styles.userName}>{user?.name || 'Pengguna'} 👋</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={handleLogout}
-            disabled={loggingOut}>
-            {loggingOut ? (
-              <ActivityIndicator color="#ef4444" size="small" />
-            ) : (
-              <Text style={styles.logoutText}>Logout</Text>
-            )}
-          </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Halo,</Text>
+          <Text style={styles.userName}>{user?.name || 'Pengguna'} 👋</Text>
         </View>
 
-        {/* User Profile Card */}
-        <View style={styles.userCard}>
-          <View style={styles.badgeRow}>
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>TERAUTENTIKASI</Text>
-            </View>
-            <Text style={styles.phaseBadge}>FASE 3 SELESAI</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+          disabled={loggingOut}>
+          {loggingOut ? (
+            <ActivityIndicator color="#ef4444" size="small" />
+          ) : (
+            <Text style={styles.logoutText}>Logout</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
-          <Text style={styles.userEmailLabel}>Email Terdaftar:</Text>
-          <Text style={styles.userEmail}>{user?.email || '-'}</Text>
-          <Text style={styles.userId}>User ID: {user?.id || '-'}</Text>
-        </View>
-
-        {/* Info Card for Next Phase */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📝 Catatan Pribadi (SecureNotes)</Text>
-          <Text style={styles.infoDesc}>
-            Navigasi & Auth Flow berhasil terhubung. Sesi Anda tersimpan di
-            AsyncStorage sehingga saat aplikasi di-restart, Anda akan tetap login
-            di halaman ini.
+      {/* Action Bar */}
+      <View style={styles.actionBar}>
+        <View>
+          <Text style={styles.sectionTitle}>Daftar Catatan</Text>
+          <Text style={styles.sectionSubtitle}>
+            {notes.length} catatan tersimpan di storage
           </Text>
-          <View style={styles.nextPhaseBox}>
-            <Text style={styles.nextPhaseTitle}>Tahap Berikutnya:</Text>
-            <Text style={styles.nextPhaseText}>
-              • Fase 4: CRUD Catatan (Create, Read, Delete plain text)
-            </Text>
-            <Text style={styles.nextPhaseText}>
-              • Fase 5: Enkripsi AES dengan crypto-js & polyfill
-            </Text>
-          </View>
         </View>
-      </ScrollView>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => setIsModalVisible(true)}>
+          <Text style={styles.addBtnText}>+ Tambah</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content / Notes List */}
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#38bdf8" />
+          <Text style={styles.loadingText}>Memuat catatan...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={notes}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <NoteCard note={item} onDelete={handleDeleteNote} />
+          )}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#38bdf8"
+              colors={['#38bdf8']}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={styles.emptyTitle}>Belum Ada Catatan</Text>
+              <Text style={styles.emptySubtitle}>
+                Tekan tombol "+ Tambah" di atas untuk membuat catatan pertama
+                Anda.
+              </Text>
+            </View>
+          }
+        />
+      )}
+
+      {/* Add Note Modal */}
+      <AddNoteModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onSubmit={handleCreateNote}
+      />
     </View>
   );
 };
@@ -103,130 +183,100 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f172a',
   },
-  scrollContent: {
-    padding: 20,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 10,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#94a3b8',
   },
   userName: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: '#f8fafc',
   },
   logoutBtn: {
-    backgroundColor: '#334155',
-    paddingHorizontal: 16,
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: '#334155',
   },
   logoutText: {
     color: '#f87171',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: 12,
   },
-  userCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 16,
-  },
-  badgeRow: {
+  actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#064e3b',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 6,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34d399',
-  },
-  statusText: {
-    color: '#a7f3d0',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  phaseBadge: {
-    color: '#38bdf8',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  userEmailLabel: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginBottom: 2,
-  },
-  userEmail: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#f1f5f9',
-    marginBottom: 4,
   },
-  userId: {
+  sectionSubtitle: {
     fontSize: 12,
-    color: '#64748b',
-    fontFamily: 'monospace',
+    color: '#94a3b8',
+    marginTop: 2,
   },
-  infoCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#334155',
+  addBtn: {
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
-  infoTitle: {
-    fontSize: 16,
+  addBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#94a3b8',
+    fontSize: 13,
+    marginTop: 10,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#f8fafc',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  infoDesc: {
+  emptySubtitle: {
     fontSize: 13,
-    color: '#94a3b8',
-    lineHeight: 19,
-    marginBottom: 14,
-  },
-  nextPhaseBox: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    padding: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#38bdf8',
-    gap: 4,
-  },
-  nextPhaseTitle: {
-    color: '#e2e8f0',
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  nextPhaseText: {
-    color: '#94a3b8',
-    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
     lineHeight: 18,
   },
 });
