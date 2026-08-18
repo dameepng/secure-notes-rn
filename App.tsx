@@ -6,6 +6,8 @@ import { TurboModuleRegistry } from 'react-native';
 
 import { AuthProvider } from './src/navigation/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { ToastProvider } from './src/components/ToastContext';
 
 const globalObj = globalThis as any;
 const isFabric = Boolean(globalObj.nativeFabricUIManager);
@@ -46,14 +48,18 @@ const customDarkTheme = {
 
 function App() {
   return (
-    <SafeAreaProvider style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-      <AuthProvider>
-        <NavigationContainer theme={customDarkTheme}>
-          <RootNavigator />
-        </NavigationContainer>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+        <ToastProvider>
+          <AuthProvider>
+            <NavigationContainer theme={customDarkTheme}>
+              <RootNavigator />
+            </NavigationContainer>
+          </AuthProvider>
+        </ToastProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
