@@ -43,6 +43,14 @@
     "react-test-renderer": "19.1.0",
     "typescript": "^5.8.3"
   },
+  "codegenConfig": {
+    "name": "AppSpecs",
+    "type": "modules",
+    "jsSrcsDir": "src/native",
+    "android": {
+      "javaPackageName": "com.securenotes"
+    }
+  },
   "engines": {
     "node": ">=20"
   }
