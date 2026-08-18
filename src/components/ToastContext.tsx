@@ -13,6 +13,14 @@ import {
   View,
 } from 'react-native';
 
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Info,
+  X,
+} from 'lucide-react-native';
+
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export interface ToastMessage {
@@ -126,17 +134,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     [showToast],
   );
 
-  const getIcon = (type: ToastType) => {
+  const renderIcon = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return '✅';
+        return <CheckCircle2 size={20} color="#34d399" />;
       case 'error':
-        return '❌';
+        return <XCircle size={20} color="#f87171" />;
       case 'warning':
-        return '⚠️';
+        return <AlertTriangle size={20} color="#fbbf24" />;
       case 'info':
       default:
-        return 'ℹ️';
+        return <Info size={20} color="#38bdf8" />;
     }
   };
 
@@ -175,7 +183,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
               transform: [{ translateY: slideAnim }],
             },
           ]}>
-          <Text style={styles.toastIcon}>{getIcon(toast.type)}</Text>
+          <View style={styles.toastIconContainer}>{renderIcon(toast.type)}</View>
           <View style={styles.toastContent}>
             {toast.title && (
               <Text style={styles.toastTitle}>{toast.title}</Text>
@@ -186,7 +194,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
             style={styles.closeBtn}
             onPress={hideToast}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.closeIcon}>✕</Text>
+            <X size={16} color="#94a3b8" />
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -244,8 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0c4a6e',
     borderColor: '#0284c7',
   },
-  toastIcon: {
-    fontSize: 18,
+  toastIconContainer: {
     marginRight: 12,
   },
   toastContent: {

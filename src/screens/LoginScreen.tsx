@@ -24,6 +24,7 @@ import {
   AlertText,
   Center,
 } from '@gluestack-ui/themed';
+import { ShieldCheck, LogIn, Zap, Lock, Mail, KeyRound } from 'lucide-react-native';
 
 import { useAuth } from '../navigation/AuthContext';
 import { ApiError } from '../types/api';
@@ -125,9 +126,12 @@ export const LoginScreen: React.FC = () => {
               </BadgeText>
             </Badge>
 
-            <Heading size="3xl" color="#f8fafc" fontWeight="$extrabold" textAlign="center">
-              SecureNotes
-            </Heading>
+            <HStack space="xs" alignItems="center" justifyContent="center">
+              <ShieldCheck size={32} color="#38bdf8" />
+              <Heading size="3xl" color="#f8fafc" fontWeight="$extrabold" textAlign="center">
+                SecureNotes
+              </Heading>
+            </HStack>
             <Text size="sm" color="#94a3b8" mt="$1" textAlign="center">
               Aplikasi Catatan Pribadi Terenkripsi AES-256
             </Text>
@@ -175,9 +179,12 @@ export const LoginScreen: React.FC = () => {
               {/* FormControl: Email */}
               <FormControl isInvalid={Boolean(emailError)} isRequired>
                 <FormControlLabel mb="$1">
-                  <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
-                    Email
-                  </FormControlLabelText>
+                  <HStack space="xs" alignItems="center">
+                    <Mail size={12} color="#94a3b8" />
+                    <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                      Email
+                    </FormControlLabelText>
+                  </HStack>
                 </FormControlLabel>
                 <Input
                   variant="outline"
@@ -213,9 +220,12 @@ export const LoginScreen: React.FC = () => {
               {/* FormControl: Password */}
               <FormControl isInvalid={Boolean(passwordError)} isRequired>
                 <FormControlLabel mb="$1">
-                  <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
-                    Password
-                  </FormControlLabelText>
+                  <HStack space="xs" alignItems="center">
+                    <KeyRound size={12} color="#94a3b8" />
+                    <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
+                      Password
+                    </FormControlLabelText>
+                  </HStack>
                 </FormControlLabel>
                 <Input
                   variant="outline"
@@ -259,10 +269,14 @@ export const LoginScreen: React.FC = () => {
                 mt="$2">
                 {loading ? (
                   <ButtonSpinner color="#ffffff" mr="$2" />
-                ) : null}
-                <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
-                  {loading ? 'Memverifikasi...' : 'Masuk ke Aplikasi'}
-                </ButtonText>
+                ) : (
+                  <HStack space="xs" alignItems="center">
+                    <LogIn size={16} color="#ffffff" />
+                    <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
+                      Masuk ke Aplikasi
+                    </ButtonText>
+                  </HStack>
+                )}
               </Button>
 
               {/* Quick Fill Button */}
@@ -272,18 +286,24 @@ export const LoginScreen: React.FC = () => {
                 action="secondary"
                 onPress={handleQuickFill}
                 isDisabled={loading}>
-                <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
-                  ⚡ Isi Otomatis Akun Demo (Quick Fill)
-                </ButtonText>
+                <HStack space="xs" alignItems="center">
+                  <Zap size={14} color="#38bdf8" />
+                  <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
+                    Isi Otomatis Akun Demo (Quick Fill)
+                  </ButtonText>
+                </HStack>
               </Button>
             </VStack>
           </Card>
 
           {/* Footer Note */}
           <Center mt="$8">
-            <Text size="xs" color="#64748b" textAlign="center" lineHeight="$sm">
-              🔒 Sesi login dan token JWT disimpan lokal via AsyncStorage terenkripsi.
-            </Text>
+            <HStack space="xs" alignItems="center" px="$4">
+              <Lock size={12} color="#64748b" />
+              <Text size="xs" color="#64748b" textAlign="center" lineHeight="$sm">
+                Sesi login dan token JWT disimpan lokal via AsyncStorage terenkripsi.
+              </Text>
+            </HStack>
           </Center>
         </ScrollView>
       </KeyboardAvoidingView>

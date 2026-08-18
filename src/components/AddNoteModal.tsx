@@ -29,6 +29,7 @@ import {
   HStack,
   Box,
 } from '@gluestack-ui/themed';
+import { FilePlus, X, Lock } from 'lucide-react-native';
 import { NoteInput } from '../types/note';
 
 interface AddNoteModalProps {
@@ -100,12 +101,13 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
         {/* Header */}
         <ModalHeader borderBottomColor="#334155" borderBottomWidth={1} pb="$3">
           <HStack alignItems="center" space="xs" flex={1}>
+            <FilePlus size={18} color="#38bdf8" />
             <Heading size="md" color="#f8fafc" fontWeight="$bold">
-              ➕ Tambah Catatan Baru
+              Tambah Catatan Baru
             </Heading>
           </HStack>
-          <ModalCloseButton onPress={handleCancel} isDisabled={submitting}>
-            <Text color="#94a3b8" fontSize="$md">✕</Text>
+          <ModalCloseButton onPress={handleCancel} disabled={submitting}>
+            <X size={18} color="#94a3b8" />
           </ModalCloseButton>
         </ModalHeader>
 
@@ -220,10 +222,14 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
               isDisabled={submitting}>
               {submitting ? (
                 <ButtonSpinner color="#ffffff" mr="$1" />
-              ) : null}
-              <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
-                {submitting ? 'Menyimpan...' : 'Simpan Enkripsi'}
-              </ButtonText>
+              ) : (
+                <HStack space="xs" alignItems="center">
+                  <Lock size={14} color="#ffffff" />
+                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
+                    Simpan Enkripsi
+                  </ButtonText>
+                </HStack>
+              )}
             </Button>
           </HStack>
         </ModalFooter>

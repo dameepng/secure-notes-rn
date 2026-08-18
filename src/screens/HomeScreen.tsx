@@ -24,6 +24,21 @@ import {
   AlertText,
   Center,
 } from '@gluestack-ui/themed';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+  RefreshCw,
+  Plus,
+  Zap,
+  Trash2,
+  LogOut,
+  FileText,
+  AlertCircle,
+  PlusCircle,
+  Layers,
+} from 'lucide-react-native';
 
 import { useAuth } from '../navigation/AuthContext';
 import {
@@ -181,7 +196,7 @@ export const HomeScreen: React.FC = () => {
         const elapsedMs = Date.now() - startTime;
 
         setNotes(prev => [...createdNotes, ...prev]);
-        const benchmarkMsg = `⚡ Berhasil generate & enkripsi ${count} catatan dalam ${elapsedMs}ms! Total: ${
+        const benchmarkMsg = `Berhasil generate & enkripsi ${count} catatan dalam ${elapsedMs}ms! Total: ${
           notes.length + count
         } items.`;
         setPerfBenchmarkText(benchmarkMsg);
@@ -213,7 +228,7 @@ export const HomeScreen: React.FC = () => {
             try {
               await clearAllNotes();
               setNotes([]);
-              setPerfBenchmarkText('🧹 Semua catatan berhasil dibersihkan.');
+              setPerfBenchmarkText('Semua catatan berhasil dibersihkan.');
               showInfo('Seluruh catatan berhasil dibersihkan.');
             } catch (error) {
               showError('Gagal mengosongkan catatan.');
@@ -259,9 +274,12 @@ export const HomeScreen: React.FC = () => {
         {loadError && (
           <Alert action="error" variant="accent" bg="#450a0a" borderColor="#ef4444" borderRadius="$xl" p="$3">
             <HStack justifyContent="space-between" alignItems="center" flex={1}>
-              <AlertText color="#fca5a5" size="xs" flex={1} mr="$2">
-                ⚠️ {loadError}
-              </AlertText>
+              <HStack space="xs" alignItems="center" flex={1} mr="$2">
+                <AlertCircle size={16} color="#fca5a5" />
+                <AlertText color="#fca5a5" size="xs" flex={1}>
+                  {loadError}
+                </AlertText>
+              </HStack>
               <Button size="xs" variant="solid" action="negative" bg="#dc2626" borderRadius="$md" onPress={loadNotes}>
                 <ButtonText color="#ffffff" fontSize="$2xs">Coba Lagi</ButtonText>
               </Button>
@@ -281,7 +299,7 @@ export const HomeScreen: React.FC = () => {
           <VStack space="sm">
             <HStack justifyContent="space-between" alignItems="center">
               <HStack space="xs" alignItems="center">
-                <Text fontSize="$lg">🛡️</Text>
+                <ShieldCheck size={20} color="#38bdf8" />
                 <Heading size="sm" color="#f8fafc" fontWeight="$bold">
                   Native Security Status
                 </Heading>
@@ -321,22 +339,44 @@ export const HomeScreen: React.FC = () => {
 
                 <HStack justifyContent="space-between" alignItems="center">
                   <Text size="xs" color="#cbd5e1">Kunci Layar (PIN/Biometrik):</Text>
-                  <Text
-                    size="xs"
-                    fontWeight="$bold"
-                    color={securityStatus?.isDeviceSecure ? '#34d399' : '#fbbf24'}>
-                    {securityStatus?.isDeviceSecure ? 'AKTIF ✅' : 'TIDAK AKTIF ⚠️'}
-                  </Text>
+                  <HStack space="xs" alignItems="center">
+                    {securityStatus?.isDeviceSecure ? (
+                      <>
+                        <CheckCircle2 size={13} color="#34d399" />
+                        <Text size="xs" fontWeight="$bold" color="#34d399">
+                          AKTIF
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle size={13} color="#fbbf24" />
+                        <Text size="xs" fontWeight="$bold" color="#fbbf24">
+                          TIDAK AKTIF
+                        </Text>
+                      </>
+                    )}
+                  </HStack>
                 </HStack>
 
                 <HStack justifyContent="space-between" alignItems="center">
                   <Text size="xs" color="#cbd5e1">Hardware Keystore (TEE):</Text>
-                  <Text
-                    size="xs"
-                    fontWeight="$bold"
-                    color={securityStatus?.hasHardwareKeystore ? '#34d399' : '#fbbf24'}>
-                    {securityStatus?.hasHardwareKeystore ? 'DIDUKUNG 🔐' : 'SOFTWARE-ONLY ⚠️'}
-                  </Text>
+                  <HStack space="xs" alignItems="center">
+                    {securityStatus?.hasHardwareKeystore ? (
+                      <>
+                        <Lock size={13} color="#34d399" />
+                        <Text size="xs" fontWeight="$bold" color="#34d399">
+                          DIDUKUNG
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle size={13} color="#fbbf24" />
+                        <Text size="xs" fontWeight="$bold" color="#fbbf24">
+                          SOFTWARE-ONLY
+                        </Text>
+                      </>
+                    )}
+                  </HStack>
                 </HStack>
               </VStack>
             </Box>
@@ -350,10 +390,14 @@ export const HomeScreen: React.FC = () => {
               alignSelf="center">
               {checkingSecurity ? (
                 <ButtonSpinner color="#38bdf8" mr="$1" />
-              ) : null}
-              <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
-                🔄 Re-check via JSI Direct Call
-              </ButtonText>
+              ) : (
+                <HStack space="xs" alignItems="center">
+                  <RefreshCw size={12} color="#38bdf8" />
+                  <ButtonText color="#38bdf8" fontSize="$xs" fontWeight="$semibold">
+                    Re-check via JSI Direct Call
+                  </ButtonText>
+                </HStack>
+              )}
             </Button>
           </VStack>
         </Card>
@@ -375,9 +419,12 @@ export const HomeScreen: React.FC = () => {
             bg="#0284c7"
             borderRadius="$xl"
             onPress={() => setIsModalVisible(true)}>
-            <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$xs">
-              + Tambah
-            </ButtonText>
+            <HStack space="xs" alignItems="center">
+              <Plus size={14} color="#ffffff" />
+              <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$xs">
+                Tambah
+              </ButtonText>
+            </HStack>
           </Button>
         </HStack>
 
@@ -392,9 +439,12 @@ export const HomeScreen: React.FC = () => {
           p="$4">
           <VStack space="sm">
             <HStack justifyContent="space-between" alignItems="center">
-              <Heading size="sm" color="#f8fafc" fontWeight="$bold">
-                🚀 Fabric FlatList Stress-Test
-              </Heading>
+              <HStack space="xs" alignItems="center">
+                <Zap size={16} color="#38bdf8" />
+                <Heading size="sm" color="#f8fafc" fontWeight="$bold">
+                  Fabric FlatList Stress-Test
+                </Heading>
+              </HStack>
               <Badge size="sm" variant="solid" action="info" bg="#0284c7" borderRadius="$sm">
                 <BadgeText color="#e0f2fe" fontSize="$2xs" fontWeight="$bold">
                   FASE 6
@@ -419,9 +469,12 @@ export const HomeScreen: React.FC = () => {
                 {generatingCount === 100 ? (
                   <ButtonSpinner color="#ffffff" />
                 ) : (
-                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
-                    +100 Notes
-                  </ButtonText>
+                  <HStack space="xs" alignItems="center">
+                    <PlusCircle size={11} color="#ffffff" />
+                    <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                      100 Notes
+                    </ButtonText>
+                  </HStack>
                 )}
               </Button>
 
@@ -437,9 +490,12 @@ export const HomeScreen: React.FC = () => {
                 {generatingCount === 500 ? (
                   <ButtonSpinner color="#ffffff" />
                 ) : (
-                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
-                    +500 Notes
-                  </ButtonText>
+                  <HStack space="xs" alignItems="center">
+                    <Layers size={11} color="#ffffff" />
+                    <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                      500 Notes
+                    </ButtonText>
+                  </HStack>
                 )}
               </Button>
 
@@ -452,17 +508,23 @@ export const HomeScreen: React.FC = () => {
                 borderRadius="$lg"
                 isDisabled={generatingCount !== null || notes.length === 0}
                 onPress={handleClearAllNotes}>
-                <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
-                  Bersihkan
-                </ButtonText>
+                <HStack space="xs" alignItems="center">
+                  <Trash2 size={11} color="#ffffff" />
+                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$2xs">
+                    Bersihkan
+                  </ButtonText>
+                </HStack>
               </Button>
             </HStack>
 
             {perfBenchmarkText && (
               <Box bg="#0f172a" borderRadius="$lg" p="$2.5" borderColor="#0284c7" borderWidth={1}>
-                <Text size="2xs" color="#38bdf8" fontWeight="$semibold">
-                  {perfBenchmarkText}
-                </Text>
+                <HStack space="xs" alignItems="center">
+                  <Zap size={12} color="#38bdf8" />
+                  <Text size="2xs" color="#38bdf8" fontWeight="$semibold" flex={1}>
+                    {perfBenchmarkText}
+                  </Text>
+                </HStack>
               </Box>
             )}
           </VStack>
@@ -500,7 +562,7 @@ export const HomeScreen: React.FC = () => {
         <VStack>
           <Text size="xs" color="#94a3b8">Halo,</Text>
           <Heading size="xl" color="#f8fafc" fontWeight="$extrabold">
-            {user?.name || 'Pengguna'} 👋
+            {user?.name || 'Pengguna'}
           </Heading>
         </VStack>
 
@@ -515,10 +577,14 @@ export const HomeScreen: React.FC = () => {
           isDisabled={loggingOut}>
           {loggingOut ? (
             <ButtonSpinner color="#ef4444" mr="$1" />
-          ) : null}
-          <ButtonText color="#f87171" fontSize="$xs" fontWeight="$bold">
-            Logout
-          </ButtonText>
+          ) : (
+            <HStack space="xs" alignItems="center">
+              <LogOut size={13} color="#f87171" />
+              <ButtonText color="#f87171" fontSize="$xs" fontWeight="$bold">
+                Logout
+              </ButtonText>
+            </HStack>
+          )}
         </Button>
       </HStack>
 
@@ -554,12 +620,14 @@ export const HomeScreen: React.FC = () => {
           }
           ListEmptyComponent={
             <Center py="$10" px="$4">
-              <Text fontSize="$4xl" mb="$2">📝</Text>
+              <Box mb="$3">
+                <FileText size={48} color="#475569" strokeWidth={1.5} />
+              </Box>
               <Heading size="md" color="#f8fafc" fontWeight="$bold" mb="$1">
                 Belum Ada Catatan
               </Heading>
               <Text size="xs" color="#64748b" textAlign="center" lineHeight="$sm">
-                Tekan tombol "+ Tambah" atau gunakan fitur "+100 Notes" di atas
+                Tekan tombol "Tambah" atau gunakan fitur stress-test di atas
                 untuk menguji scrolling 60/120 FPS dengan Gluestack UI.
               </Text>
             </Center>
