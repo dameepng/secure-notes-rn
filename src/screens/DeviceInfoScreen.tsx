@@ -34,6 +34,12 @@ import {
   Settings,
   AlertCircle,
   CheckCircle2,
+  Volume2,
+  Headphones,
+  Phone,
+  Play,
+  Square,
+  Radio,
 } from 'lucide-react-native';
 
 import { getDeviceBatteryStatus, BatteryStatus } from '../native/battery';
@@ -42,6 +48,13 @@ import {
   launchNativeCamera,
   CameraPermissionState,
 } from '../native/camera';
+import {
+  setDeviceAudioOutput,
+  getDeviceAudioOutput,
+  playSimulationAudio,
+  stopSimulationAudio,
+  AudioOutputMode,
+} from '../native/audioRouter';
 
 export interface DeviceInfoData {
   brand: string;
@@ -71,6 +84,11 @@ export const DeviceInfoScreen: React.FC = () => {
     useState<CameraPermissionState>('UNDETERMINED');
   const [cameraMessage, setCameraMessage] = useState<string | null>(null);
   const [isLaunchingCamera, setIsLaunchingCamera] = useState<boolean>(false);
+
+  // Fase 7: Audio routing & playback state
+  const [audioOutput, setAudioOutput] = useState<AudioOutputMode>('speaker');
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const fetchDeviceInfo = useCallback(async () => {
@@ -98,6 +116,10 @@ export const DeviceInfoScreen: React.FC = () => {
       // Check current camera permission without dialog prompt
       const perm = await checkCameraPermission();
       setCameraPermission(perm);
+
+      // Check active audio output
+      const currentAudio = getDeviceAudioOutput();
+      setAudioOutput(currentAudio);
     } catch (error) {
       console.error('Failed to reload device info or native statuses:', error);
     } finally {
@@ -107,6 +129,11 @@ export const DeviceInfoScreen: React.FC = () => {
 
   useEffect(() => {
     fetchDeviceInfo();
+
+    return () => {
+      // Cleanup audio on screen unmount
+      stopSimulationAudio();
+    };
   }, [fetchDeviceInfo]);
 
   const handleRefresh = useCallback(() => {
@@ -140,6 +167,28 @@ export const DeviceInfoScreen: React.FC = () => {
       console.error('Failed to open app settings:', err);
     });
   }, []);
+
+  // Audio routing selection handler
+  const handleSelectAudioOutput = useCallback((mode: AudioOutputMode) => {
+    setAudioOutput(mode);
+    setDeviceAudioOutput(mode);
+  }, []);
+
+  // Audio simulation playback toggle handler
+  const handleTogglePlayAudio = useCallback(async () => {
+    if (isPlayingAudio) {
+      stopSimulationAudio();
+      setIsPlayingAudio(false);
+    } else {
+      setIsPlayingAudio(true);
+      const started = await playSimulationAudio(() => {
+        setIsPlayingAudio(false);
+      });
+      if (!started) {
+        setIsPlayingAudio(false);
+      }
+    }
+  }, [isPlayingAudio]);
 
   const getBatteryIcon = () => {
     if (batteryStatus.isCharging) {
@@ -470,6 +519,164 @@ export const DeviceInfoScreen: React.FC = () => {
             </Box>
           </VStack>
 
+          {/* Audio Output Routing & Playback Simulator Card (Fase 7) */}
+          <VStack space="xs">
+            <Text
+              size="xs"
+              color="#888888"
+              fontWeight="$bold"
+              px="$1"
+              textTransform="uppercase">
+              Routing Output Audio & Playback (Fase 7)
+            </Text>
+
+            <Box
+              bg="#111111"
+              borderColor="#222222"
+              borderWidth={1.5}
+              borderRadius="$xl"
+              p="$5">
+              <VStack space="md">
+                <HStack justifyContent="space-between" alignItems="center">
+                  <HStack space="sm" alignItems="center">
+                    <Center w={36} h={36} borderRadius="$full" bg="#1a1a1a">
+                      <Radio size={20} color="#ffffff" />
+                    </Center>
+                    <VStack>
+                      <Heading size="sm" color="#ffffff" fontWeight="$bold">
+                        Audio Output Routing
+                      </Heading>
+                      <Text size="2xs" color="#888888">
+                        AudioManager Native JSI Switching
+                      </Text>
+                    </VStack>
+                  </HStack>
+
+                  <Badge size="sm" variant="solid" bg="#ffffff" borderRadius="$sm">
+                    <BadgeText
+                      color="#000000"
+                      fontSize="$2xs"
+                      fontWeight="$bold"
+                      testID="audio-active-route-badge">
+                      {audioOutput.toUpperCase()}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+
+                {/* 3 Output Mode Selection Buttons */}
+                <VStack space="xs">
+                  <Text size="2xs" color="#666666" fontWeight="$bold" textTransform="uppercase">
+                    Pilih Jalur Output
+                  </Text>
+                  <HStack space="xs">
+                    {/* Speaker */}
+                    <Button
+                      flex={1}
+                      size="sm"
+                      variant={audioOutput === 'speaker' ? 'solid' : 'outline'}
+                      bg={audioOutput === 'speaker' ? '#ffffff' : '#111111'}
+                      borderColor={audioOutput === 'speaker' ? '#ffffff' : '#222222'}
+                      borderRadius="$lg"
+                      onPress={() => handleSelectAudioOutput('speaker')}
+                      px="$2"
+                      testID="btn-route-speaker">
+                      <HStack space="xs" alignItems="center" justifyContent="center">
+                        <Volume2
+                          size={14}
+                          color={audioOutput === 'speaker' ? '#000000' : '#888888'}
+                        />
+                        <ButtonText
+                          color={audioOutput === 'speaker' ? '#000000' : '#888888'}
+                          fontWeight="$bold"
+                          fontSize="$2xs">
+                          Speaker
+                        </ButtonText>
+                      </HStack>
+                    </Button>
+
+                    {/* Earpiece */}
+                    <Button
+                      flex={1}
+                      size="sm"
+                      variant={audioOutput === 'earpiece' ? 'solid' : 'outline'}
+                      bg={audioOutput === 'earpiece' ? '#ffffff' : '#111111'}
+                      borderColor={audioOutput === 'earpiece' ? '#ffffff' : '#222222'}
+                      borderRadius="$lg"
+                      onPress={() => handleSelectAudioOutput('earpiece')}
+                      px="$2"
+                      testID="btn-route-earpiece">
+                      <HStack space="xs" alignItems="center" justifyContent="center">
+                        <Phone
+                          size={14}
+                          color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
+                        />
+                        <ButtonText
+                          color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
+                          fontWeight="$bold"
+                          fontSize="$2xs">
+                          Earpiece
+                        </ButtonText>
+                      </HStack>
+                    </Button>
+
+                    {/* Headset */}
+                    <Button
+                      flex={1}
+                      size="sm"
+                      variant={audioOutput === 'headset' ? 'solid' : 'outline'}
+                      bg={audioOutput === 'headset' ? '#ffffff' : '#111111'}
+                      borderColor={audioOutput === 'headset' ? '#ffffff' : '#222222'}
+                      borderRadius="$lg"
+                      onPress={() => handleSelectAudioOutput('headset')}
+                      px="$2"
+                      testID="btn-route-headset">
+                      <HStack space="xs" alignItems="center" justifyContent="center">
+                        <Headphones
+                          size={14}
+                          color={audioOutput === 'headset' ? '#000000' : '#888888'}
+                        />
+                        <ButtonText
+                          color={audioOutput === 'headset' ? '#000000' : '#888888'}
+                          fontWeight="$bold"
+                          fontSize="$2xs">
+                          Headset
+                        </ButtonText>
+                      </HStack>
+                    </Button>
+                  </HStack>
+                </VStack>
+
+                {/* Simulation Audio Playback Toggle */}
+                <Button
+                  size="md"
+                  variant={isPlayingAudio ? 'outline' : 'solid'}
+                  action={isPlayingAudio ? 'negative' : 'primary'}
+                  bg={isPlayingAudio ? '#220a0a' : '#ffffff'}
+                  borderColor={isPlayingAudio ? '#552222' : '#ffffff'}
+                  borderRadius="$xl"
+                  onPress={handleTogglePlayAudio}
+                  px="$4"
+                  testID="btn-toggle-audio-playback">
+                  <HStack space="xs" alignItems="center" justifyContent="center">
+                    {isPlayingAudio ? (
+                      <Square size={16} color="#ff6666" />
+                    ) : (
+                      <Play size={16} color="#000000" />
+                    )}
+                    <ButtonText
+                      color={isPlayingAudio ? '#ff6666' : '#000000'}
+                      fontWeight="$bold"
+                      fontSize="$xs">
+                      {isPlayingAudio
+                        ? 'Hentikan Audio Simulasi'
+                        : 'Putar Simulasi Ringtone'}
+                    </ButtonText>
+                  </HStack>
+                </Button>
+              </VStack>
+            </Box>
+          </VStack>
+
           {/* Hardware & Device Specifications */}
           <VStack space="xs">
             <Text
@@ -645,23 +852,6 @@ export const DeviceInfoScreen: React.FC = () => {
               </VStack>
             </Box>
           </VStack>
-
-          {/* Upcoming Phase Modules Indicator */}
-          <Box
-            bg="#0a0a0a"
-            borderColor="#1a1a1a"
-            borderWidth={1}
-            borderRadius="$xl"
-            p="$4">
-            <VStack space="xs">
-              <Heading size="xs" color="#888888">
-                Fitur Native Lanjutan (Fase 7)
-              </Heading>
-              <Text size="2xs" color="#555555">
-                Simulasi audio playback dan routing audio output (earpiece / speaker / headset) akan ditambahkan pada fase berikutnya.
-              </Text>
-            </VStack>
-          </Box>
         </VStack>
       </ScrollView>
     </Box>
