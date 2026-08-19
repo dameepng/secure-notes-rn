@@ -12,7 +12,6 @@ import {
   BadgeText,
   Button,
   ButtonText,
-  ButtonIcon,
 } from '@gluestack-ui/themed';
 import {
   Phone,
@@ -358,11 +357,14 @@ export const CallSimulatorScreen: React.FC = () => {
                 borderRadius="$xl"
                 onPress={handleStartCall}
                 isDisabled={callState !== 'IDLE'}
+                px="$3"
                 testID="btn-start-call">
-                <ButtonIcon as={() => <Phone size={18} color="#000000" />} mr="$2" />
-                <ButtonText color="#000000" fontWeight="$bold">
-                  Start Call
-                </ButtonText>
+                <HStack space="xs" alignItems="center" justifyContent="center">
+                  <Phone size={16} color="#000000" />
+                  <ButtonText color="#000000" fontWeight="$bold" fontSize="$xs">
+                    Start Call
+                  </ButtonText>
+                </HStack>
               </Button>
 
               <Button
@@ -375,11 +377,14 @@ export const CallSimulatorScreen: React.FC = () => {
                 borderRadius="$xl"
                 onPress={handleEndCall}
                 isDisabled={!isCallActive}
+                px="$3"
                 testID="btn-end-call">
-                <ButtonIcon as={() => <PhoneOff size={18} color="#ff6666" />} mr="$2" />
-                <ButtonText color="#ff6666" fontWeight="$bold">
-                  End Call
-                </ButtonText>
+                <HStack space="xs" alignItems="center" justifyContent="center">
+                  <PhoneOff size={16} color="#ff6666" />
+                  <ButtonText color="#ff6666" fontWeight="$bold" fontSize="$xs">
+                    End Call
+                  </ButtonText>
+                </HStack>
               </Button>
             </HStack>
 
@@ -395,11 +400,14 @@ export const CallSimulatorScreen: React.FC = () => {
                 borderRadius="$xl"
                 onPress={handleSimulateFailure}
                 isDisabled={!isCallActive}
+                px="$3"
                 testID="btn-simulate-failure">
-                <ButtonIcon as={() => <AlertOctagon size={18} color="#aaaaaa" />} mr="$2" />
-                <ButtonText color="#cccccc">
-                  Simulate Failure
-                </ButtonText>
+                <HStack space="xs" alignItems="center" justifyContent="center">
+                  <AlertOctagon size={16} color="#aaaaaa" />
+                  <ButtonText color="#cccccc" fontWeight="$medium" fontSize="$xs">
+                    Simulate Failure
+                  </ButtonText>
+                </HStack>
               </Button>
 
               <Button
@@ -411,19 +419,20 @@ export const CallSimulatorScreen: React.FC = () => {
                 borderRadius="$xl"
                 onPress={handleRetry}
                 isDisabled={callState !== 'FAILED'}
+                px="$3"
                 testID="btn-retry">
-                <ButtonIcon
-                  as={() => (
-                    <RotateCcw
-                      size={18}
-                      color={callState === 'FAILED' ? '#ffffff' : '#555555'}
-                    />
-                  )}
-                  mr="$2"
-                />
-                <ButtonText color={callState === 'FAILED' ? '#ffffff' : '#555555'}>
-                  Retry
-                </ButtonText>
+                <HStack space="xs" alignItems="center" justifyContent="center">
+                  <RotateCcw
+                    size={16}
+                    color={callState === 'FAILED' ? '#ffffff' : '#555555'}
+                  />
+                  <ButtonText
+                    color={callState === 'FAILED' ? '#ffffff' : '#555555'}
+                    fontWeight="$medium"
+                    fontSize="$xs">
+                    Retry
+                  </ButtonText>
+                </HStack>
               </Button>
             </HStack>
           </VStack>
