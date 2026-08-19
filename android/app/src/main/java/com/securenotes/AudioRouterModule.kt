@@ -1,6 +1,7 @@
 package com.securenotes
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -31,9 +32,11 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
         currentMode = mode
 
         try {
+            // Selalu aktifkan MODE_IN_COMMUNICATION agar OS mengizinkan override routing hardware (speaker vs earpiece vs headset)
+            am.mode = AudioManager.MODE_IN_COMMUNICATION
+
             when (mode.lowercase()) {
                 "earpiece" -> {
-                    am.mode = AudioManager.MODE_IN_COMMUNICATION
                     am.isSpeakerphoneOn = false
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val devices = am.availableCommunicationDevices
@@ -46,7 +49,7 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
                     }
                 }
                 "speaker" -> {
-                    am.mode = AudioManager.MODE_NORMAL
+                    // Paksa output keluar dari Loudspeaker utama HP (override earphone/headset kabel/bluetooth)
                     am.isSpeakerphoneOn = true
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val devices = am.availableCommunicationDevices
@@ -59,7 +62,6 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
                     }
                 }
                 "headset" -> {
-                    am.mode = AudioManager.MODE_IN_COMMUNICATION
                     am.isSpeakerphoneOn = false
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val devices = am.availableCommunicationDevices
@@ -72,6 +74,8 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
                         }
                         if (headset != null) {
                             am.setCommunicationDevice(headset)
+                        } else {
+                            am.clearCommunicationDevice()
                         }
                     }
                 }
@@ -89,6 +93,9 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
         try {
             stopSimulationSound()
 
+            // Terapkan routing aktif sebelum memutar suara
+            setAudioOutput(currentMode)
+
             val resId = reactApplicationContext.resources.getIdentifier(
                 "simulation_ringtone",
                 "raw",
@@ -96,13 +103,30 @@ class AudioRouterModule(reactContext: ReactApplicationContext) :
             )
 
             if (resId != 0) {
-                mediaPlayer = MediaPlayer.create(reactApplicationContext, resId)
-                mediaPlayer?.setOnCompletionListener {
-                    it.release()
-                    mediaPlayer = null
+                mediaPlayer = MediaPlayer().apply {
+                    val afd = reactApplicationContext.resources.openRawResourceFd(resId)
+                    if (afd != null) {
+                        setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                        afd.close()
+
+                        // Set AudioAttributes ke USAGE_VOICE_COMMUNICATION agar patuh pada routing AudioManager
+                        val attributes = AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                        setAudioAttributes(attributes)
+
+                        setOnCompletionListener {
+                            it.release()
+                            mediaPlayer = null
+                        }
+                        prepare()
+                        start()
+                        promise.resolve(true)
+                    } else {
+                        promise.resolve(false)
+                    }
                 }
-                mediaPlayer?.start()
-                promise.resolve(true)
             } else {
                 promise.resolve(false)
             }
