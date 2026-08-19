@@ -7,10 +7,7 @@ export const DeviceInfoScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <Box
-      flex={1}
-      bg="#000000"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <Box flex={1} bg="#000000" style={{ paddingTop: insets.top }}>
       {/* App Bar */}
       <HStack
         justifyContent="space-between"
@@ -26,7 +23,15 @@ export const DeviceInfoScreen: React.FC = () => {
       </HStack>
 
       <Center flex={1} px="$6">
-        <VStack space="md" alignItems="center" bg="#111111" p="$6" borderRadius="$xl" borderColor="#222222" borderWidth={1} width="100%">
+        <VStack
+          space="md"
+          alignItems="center"
+          bg="#111111"
+          p="$6"
+          borderRadius="$xl"
+          borderColor="#222222"
+          borderWidth={1}
+          width="100%">
           <Center w={56} h={56} borderRadius="$full" bg="#1a1a1a" mb="$2">
             <Smartphone size={28} color="#ffffff" />
           </Center>
