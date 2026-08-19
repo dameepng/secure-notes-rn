@@ -19,7 +19,7 @@ export const MainTabNavigator: React.FC = () => {
   // Menjamin ada jarak aman minimal di atas gesture navigation handle Android & home indicator iOS
   const bottomInset = Math.max(
     insets.bottom,
-    Platform.select({ ios: 28, android: 16, default: 16 }),
+    Platform.select({ ios: 28, android: 32, default: 32 }),
   );
   const tabBarHeight = 60 + bottomInset;
 
