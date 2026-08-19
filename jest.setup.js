@@ -117,3 +117,34 @@ jest.mock('lucide-react-native', () => {
     },
   );
 });
+
+jest.mock('react-native-sound', () => {
+  return class SoundMock {
+    static MAIN_BUNDLE = 'MAIN_BUNDLE';
+    static DOCUMENT = 'DOCUMENT';
+    static LIBRARY = 'LIBRARY';
+    static CACHES = 'CACHES';
+    static setCategory = jest.fn();
+    static setMode = jest.fn();
+
+    constructor(filename, basePathOrError, onError) {
+      if (typeof basePathOrError === 'function') {
+        basePathOrError(null);
+      } else if (typeof onError === 'function') {
+        onError(null);
+      }
+    }
+
+    play = jest.fn(cb => cb && cb(true));
+    pause = jest.fn(cb => cb && cb());
+    stop = jest.fn(cb => cb && cb());
+    release = jest.fn();
+    getDuration = jest.fn(() => 2.0);
+    getNumberOfChannels = jest.fn(() => 1);
+    isLoaded = jest.fn(() => true);
+    isPlaying = jest.fn(() => false);
+    setVolume = jest.fn().mockReturnThis();
+    setNumberOfLoops = jest.fn().mockReturnThis();
+  };
+});
+
