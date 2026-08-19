@@ -36,7 +36,7 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 jest.mock('@gluestack-ui/themed', () => {
   const { View, Text, TextInput, TouchableOpacity } = require('react-native');
   return {
-    GluestackUIProvider: ({ children }: { children: React.ReactNode }) => children,
+    GluestackUIProvider: ({ children }) => children,
     Box: View,
     VStack: View,
     HStack: View,
@@ -64,8 +64,7 @@ jest.mock('@gluestack-ui/themed', () => {
     AlertText: Text,
     Spinner: View,
     Divider: View,
-    Modal: ({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) =>
-      isOpen ? children : null,
+    Modal: ({ isOpen, children }) => (isOpen ? children : null),
     ModalBackdrop: View,
     ModalContent: View,
     ModalHeader: View,
@@ -82,15 +81,16 @@ jest.mock('@gluestack-ui/config', () => ({
 jest.mock('lucide-react-native', () => {
   const React = require('react');
   const { View } = require('react-native');
-  const createMockIcon = (name: string) => {
-    const MockIcon = (props: any) => React.createElement(View, { ...props, testID: `icon-${name}` });
+  const createMockIcon = name => {
+    const MockIcon = props =>
+      React.createElement(View, { ...props, testID: `icon-${name}` });
     MockIcon.displayName = name;
     return MockIcon;
   };
   return new Proxy(
     {},
     {
-      get: (_target, prop: string) => createMockIcon(prop),
+      get: (_target, prop) => createMockIcon(prop),
     },
   );
 });

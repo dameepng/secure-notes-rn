@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Note, NoteInput } from '../types/note';
 import { decrypt, encrypt } from './encryption';
+import { fetchNotesFromApi } from '../api/notesApi';
 
 const NOTES_STORAGE_KEY = '@securenotes/notes_encrypted_v1';
 
@@ -15,7 +16,7 @@ export interface StoredNote {
 }
 
 /**
- * Mengambil daftar catatan dari AsyncStorage dan mendekripsinya menjadi plain text secara aman.
+ * Mengambil daftar catatan dari AsyncStorage lokal dan mendekripsinya menjadi plain text secara aman.
  * Menangani kasus data korup / JSON malformed tanpa menyebabkan aplikasi crash.
  */
 export async function getNotes(userId?: string): Promise<Note[]> {
@@ -29,17 +30,22 @@ export async function getNotes(userId?: string): Promise<Note[]> {
     try {
       storedNotes = JSON.parse(rawData);
       if (!Array.isArray(storedNotes)) {
-        console.warn('Stored notes data is not an array, initializing empty list.');
+        console.warn(
+          'Stored notes data is not an array, initializing empty list.',
+        );
         return [];
       }
     } catch (parseError) {
-      console.error('Failed to parse notes JSON from storage (Data corrupted):', parseError);
+      console.error(
+        'Failed to parse notes JSON from storage (Data corrupted):',
+        parseError,
+      );
       return [];
     }
 
     // Filter berdasarkan userId jika disediakan
     const userNotes = userId
-      ? storedNotes.filter(n => n && n.userId === userId)
+      ? storedNotes.filter(n => n && String(n.userId) === String(userId))
       : storedNotes.filter(Boolean);
 
     // Dekripsi setiap catatan secara aman
@@ -88,6 +94,64 @@ export async function getRawStoredNotes(): Promise<StoredNote[]> {
     console.error('Error reading raw stored notes:', error);
     return [];
   }
+}
+
+/**
+ * Mengambil daftar catatan dari MockAPI dan menyinkronkannya ke local AsyncStorage.
+ */
+export async function syncNotesFromApi(userId?: string): Promise<Note[]> {
+  try {
+    const remoteNotes = await fetchNotesFromApi(userId);
+    if (Array.isArray(remoteNotes) && remoteNotes.length > 0) {
+      const decryptedNotes: Note[] = [];
+      const storedNotesToSave: StoredNote[] = [];
+
+      remoteNotes.forEach(item => {
+        let decryptedContent = item.content || '';
+        if (item.isEncrypted && item.content) {
+          try {
+            decryptedContent = decrypt(item.content);
+          } catch {
+            decryptedContent = item.content;
+          }
+        }
+
+        const created = item.createAt || item.createdAt || Date.now();
+        const updated = item.updateAt || item.updatedAt || created;
+
+        decryptedNotes.push({
+          id: String(item.id),
+          title: item.title || '(Tanpa Judul)',
+          content: decryptedContent,
+          createdAt: Number(created),
+          updatedAt: Number(updated),
+          userId: String(item.userId || 'unknown'),
+        });
+
+        storedNotesToSave.push({
+          id: String(item.id),
+          title: item.title || '(Tanpa Judul)',
+          content: item.content || '',
+          createdAt: Number(created),
+          updatedAt: Number(updated),
+          userId: String(item.userId || 'unknown'),
+          isEncrypted: Boolean(item.isEncrypted),
+        });
+      });
+
+      await AsyncStorage.setItem(
+        NOTES_STORAGE_KEY,
+        JSON.stringify(storedNotesToSave),
+      );
+
+      return decryptedNotes.sort((a, b) => b.createdAt - a.createdAt);
+    }
+  } catch (error) {
+    console.warn('Failed to sync notes from MockAPI:', error);
+  }
+
+  // Fallback to local storage
+  return getNotes(userId);
 }
 
 /**
@@ -279,6 +343,7 @@ export async function clearAllNotes(): Promise<void> {
 export default {
   getNotes,
   getRawStoredNotes,
+  syncNotesFromApi,
   createNote,
   bulkCreateNotes,
   deleteNote,

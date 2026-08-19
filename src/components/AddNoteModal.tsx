@@ -21,15 +21,9 @@ import {
   Button,
   ButtonText,
   ButtonSpinner,
-  Badge,
-  BadgeText,
-  Alert,
-  AlertText,
   VStack,
   HStack,
-  Box,
 } from '@gluestack-ui/themed';
-import { FilePlus, X, Lock } from 'lucide-react-native';
 import { NoteInput } from '../types/note';
 
 interface AddNoteModalProps {
@@ -52,7 +46,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   const handleSave = async () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      setTitleError('Judul catatan harus diisi.');
+      setTitleError('Judul tidak boleh kosong.');
       return;
     }
 
@@ -69,7 +63,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
       setContent('');
       onClose();
     } catch (err: unknown) {
-      setErrorMessage((err as Error).message || 'Gagal mengenkripsi dan menyimpan catatan.');
+      setErrorMessage((err as Error).message || 'Gagal menyimpan catatan.');
     } finally {
       setSubmitting(false);
     }
@@ -91,54 +85,49 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
       isOpen={visible}
       onClose={handleCancel}
       size="lg">
-      <ModalBackdrop bg="rgba(0, 0, 0, 0.75)" />
+      <ModalBackdrop bg="rgba(0, 0, 0, 0.85)" />
       <ModalContent
-        bg="#1e293b"
-        borderColor="#334155"
+        bg="#111111"
+        borderColor="#222222"
         borderWidth={1}
-        borderRadius="$2xl"
+        borderRadius="$xl"
         p="$4">
         {/* Header */}
-        <ModalHeader borderBottomColor="#334155" borderBottomWidth={1} pb="$3">
-          <HStack alignItems="center" space="xs" flex={1}>
-            <FilePlus size={18} color="#38bdf8" />
-            <Heading size="md" color="#f8fafc" fontWeight="$bold">
-              Tambah Catatan Baru
-            </Heading>
-          </HStack>
+        <ModalHeader pb="$3">
+          <Heading size="md" color="#ffffff" fontWeight="$bold" flex={1}>
+            Catatan Baru
+          </Heading>
           <ModalCloseButton onPress={handleCancel} disabled={submitting}>
-            <X size={18} color="#94a3b8" />
+            <Text color="#666666" fontSize="$sm">✕</Text>
           </ModalCloseButton>
         </ModalHeader>
 
         {/* Body */}
-        <ModalBody py="$4">
-          <VStack space="md">
+        <ModalBody py="$3">
+          <VStack space="lg">
             {errorMessage && (
-              <Alert action="error" variant="accent" bg="#450a0a" borderColor="#ef4444" borderRadius="$lg" p="$3">
-                <AlertText color="#fca5a5" size="xs">
-                  {errorMessage}
-                </AlertText>
-              </Alert>
+              <Text color="#999999" size="xs">
+                {errorMessage}
+              </Text>
             )}
 
-            {/* Form Title */}
+            {/* Title */}
             <FormControl isInvalid={Boolean(titleError)} isRequired>
-              <FormControlLabel mb="$1">
-                <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
-                  Judul Catatan *
+              <FormControlLabel mb="$2">
+                <FormControlLabelText color="#999999" fontSize="$xs" fontWeight="$medium">
+                  Judul
                 </FormControlLabelText>
               </FormControlLabel>
               <Input
                 variant="outline"
-                size="md"
-                bg="#0f172a"
-                borderColor={titleError ? '#ef4444' : '#334155'}
-                borderRadius="$xl">
+                size="lg"
+                bg="#0a0a0a"
+                borderColor={titleError ? '#ff4444' : '#333333'}
+                borderRadius="$lg">
                 <InputField
-                  placeholder="Contoh: Ide Project React Native"
-                  placeholderTextColor="#64748b"
-                  color="#f8fafc"
+                  placeholder="Judul catatan"
+                  placeholderTextColor="#555555"
+                  color="#ffffff"
                   value={title}
                   onChangeText={(text: string) => {
                     setTitle(text);
@@ -151,30 +140,30 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
               </Input>
               {titleError && (
                 <FormControlError mt="$1">
-                  <FormControlErrorText color="#f87171" fontSize="$2xs">
+                  <FormControlErrorText color="#ff6666" fontSize="$2xs">
                     {titleError}
                   </FormControlErrorText>
                 </FormControlError>
               )}
             </FormControl>
 
-            {/* Form Content */}
+            {/* Content */}
             <FormControl>
-              <FormControlLabel mb="$1">
-                <FormControlLabelText color="#cbd5e1" fontSize="$xs" fontWeight="$semibold">
-                  Isi Catatan (Akan Dienkripsi AES-256)
+              <FormControlLabel mb="$2">
+                <FormControlLabelText color="#999999" fontSize="$xs" fontWeight="$medium">
+                  Isi Catatan
                 </FormControlLabelText>
               </FormControlLabel>
               <Textarea
                 size="md"
-                bg="#0f172a"
-                borderColor="#334155"
-                borderRadius="$xl"
+                bg="#0a0a0a"
+                borderColor="#333333"
+                borderRadius="$lg"
                 h={120}>
                 <TextareaInput
-                  placeholder="Tulis detail catatan rahasia Anda di sini..."
-                  placeholderTextColor="#64748b"
-                  color="#f8fafc"
+                  placeholder="Tulis catatan..."
+                  placeholderTextColor="#555555"
+                  color="#ffffff"
                   value={content}
                   onChangeText={(text: string) => setContent(text)}
                   editable={!submitting}
@@ -183,52 +172,42 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
             </FormControl>
 
             {submitting && (
-              <Box bg="#064e3b" p="$2" borderRadius="$lg" alignItems="center">
-                <HStack space="xs" alignItems="center">
-                  <Badge size="sm" variant="solid" action="success" bg="#059669" borderRadius="$full">
-                    <BadgeText color="#ffffff" fontSize="$2xs">AES-256 GCM</BadgeText>
-                  </Badge>
-                  <Text size="xs" color="#a7f3d0" fontWeight="$semibold">
-                    Mengenkripsi payload catatan...
-                  </Text>
-                </HStack>
-              </Box>
+              <Text size="xs" color="#666666" textAlign="center">
+                Menyimpan...
+              </Text>
             )}
           </VStack>
         </ModalBody>
 
-        {/* Footer Buttons */}
-        <ModalFooter borderTopColor="#334155" borderTopWidth={1} pt="$3">
+        {/* Footer */}
+        <ModalFooter pt="$3">
           <HStack space="sm" flex={1}>
             <Button
               flex={1}
               size="md"
               variant="outline"
               action="secondary"
-              borderColor="#475569"
-              borderRadius="$xl"
+              borderColor="#333333"
+              borderRadius="$lg"
               onPress={handleCancel}
               isDisabled={submitting}>
-              <ButtonText color="#cbd5e1" fontSize="$sm">Batal</ButtonText>
+              <ButtonText color="#666666" fontSize="$sm">Batal</ButtonText>
             </Button>
             <Button
               flex={1}
               size="md"
               variant="solid"
               action="primary"
-              bg="#0284c7"
-              borderRadius="$xl"
+              bg="#ffffff"
+              borderRadius="$lg"
               onPress={handleSave}
               isDisabled={submitting}>
               {submitting ? (
-                <ButtonSpinner color="#ffffff" mr="$1" />
+                <ButtonSpinner color="#000000" />
               ) : (
-                <HStack space="xs" alignItems="center">
-                  <Lock size={14} color="#ffffff" />
-                  <ButtonText color="#ffffff" fontWeight="$bold" fontSize="$sm">
-                    Simpan Enkripsi
-                  </ButtonText>
-                </HStack>
+                <ButtonText color="#000000" fontWeight="$bold" fontSize="$sm">
+                  Simpan
+                </ButtonText>
               )}
             </Button>
           </HStack>
@@ -239,3 +218,4 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
 };
 
 export default AddNoteModal;
+

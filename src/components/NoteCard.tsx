@@ -1,17 +1,13 @@
 import React from 'react';
 import {
-  Card,
   VStack,
   HStack,
   Heading,
   Text,
-  Badge,
-  BadgeText,
   Button,
+  ButtonText,
   Box,
-  Divider,
 } from '@gluestack-ui/themed';
-import { Trash2, Lock } from 'lucide-react-native';
 import { Note } from '../types/note';
 
 interface NoteCardProps {
@@ -29,20 +25,17 @@ const NoteCardComponent: React.FC<NoteCardProps> = ({ note, onDelete }) => {
   });
 
   return (
-    <Card
-      size="md"
-      variant="elevated"
-      bg="#1e293b"
-      borderColor="#334155"
+    <Box
+      bg="#111111"
+      borderColor="#222222"
       borderWidth={1}
-      borderRadius="$xl"
+      borderRadius="$lg"
       p="$4"
       mb="$3">
       <VStack space="sm">
-        {/* Card Header */}
         <HStack justifyContent="space-between" alignItems="center">
           <Box flex={1} mr="$2">
-            <Heading size="sm" color="#f8fafc" fontWeight="$bold" numberOfLines={1}>
+            <Heading size="sm" color="#ffffff" fontWeight="$bold" numberOfLines={1}>
               {note.title}
             </Heading>
           </Box>
@@ -52,42 +45,21 @@ const NoteCardComponent: React.FC<NoteCardProps> = ({ note, onDelete }) => {
             action="negative"
             p="$1.5"
             onPress={() => onDelete(note.id)}>
-            <Trash2 size={16} color="#ef4444" />
+            <ButtonText color="#666666" fontSize="$2xs">
+              Hapus
+            </ButtonText>
           </Button>
         </HStack>
 
-        {/* Content */}
-        <Text size="sm" color="#94a3b8" numberOfLines={3} lineHeight="$sm">
+        <Text size="sm" color="#888888" numberOfLines={3} lineHeight="$sm">
           {note.content || '(Tidak ada isi)'}
         </Text>
 
-        <Divider bg="#334155" my="$1" />
-
-        {/* Card Footer */}
-        <HStack justifyContent="space-between" alignItems="center">
-          <Text size="2xs" color="#64748b">
-            {formattedDate}
-          </Text>
-          <Badge
-            size="sm"
-            variant="solid"
-            action="success"
-            bg="#064e3b"
-            borderColor="#059669"
-            borderWidth={1}
-            borderRadius="$xs"
-            px="$2"
-            py="$0.5">
-            <HStack space="xs" alignItems="center">
-              <Lock size={10} color="#a7f3d0" />
-              <BadgeText color="#a7f3d0" fontSize="$2xs" fontWeight="$bold">
-                AES-256 Encrypted
-              </BadgeText>
-            </HStack>
-          </Badge>
-        </HStack>
+        <Text size="2xs" color="#555555" mt="$1">
+          {formattedDate}
+        </Text>
       </VStack>
-    </Card>
+    </Box>
   );
 };
 
@@ -103,3 +75,4 @@ export const NoteCard = React.memo(NoteCardComponent, (prevProps, nextProps) => 
 });
 
 export default NoteCard;
+
