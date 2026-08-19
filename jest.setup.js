@@ -11,6 +11,11 @@ jest.mock('react-native-screens', () => {
     ScreenStack: View,
     ScreenStackHeaderConfig: View,
     ScreenStackHeaderSubview: View,
+    SearchBar: View,
+    FullWindowOverlay: View,
+    compatibilityFlags: {
+      usesNewAndroidHeaderHeightImplementation: false,
+    },
   };
 });
 

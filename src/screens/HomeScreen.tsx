@@ -386,7 +386,7 @@ export const HomeScreen: React.FC = () => {
     <Box
       flex={1}
       bg="#000000"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      style={{ paddingTop: insets.top }}>
       {/* App Bar */}
       <HStack
         justifyContent="space-between"
