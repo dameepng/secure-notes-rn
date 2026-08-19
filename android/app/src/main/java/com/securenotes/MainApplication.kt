@@ -20,6 +20,7 @@ class MainApplication : Application(), ReactApplication {
               add(SecurityCheckerPackage())
               add(BatteryInfoPackage())
               add(CameraLauncherPackage())
+              add(AudioRouterPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
