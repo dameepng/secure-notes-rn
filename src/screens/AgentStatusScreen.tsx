@@ -18,7 +18,6 @@ import {
   PhoneCall,
   Activity,
   Shield,
-  CircleDot,
 } from 'lucide-react-native';
 
 import {
@@ -150,6 +149,10 @@ export const AgentStatusScreen: React.FC = () => {
     }
   };
 
+  const activeOption =
+    STATUS_OPTIONS.find(o => o.type === currentStatus) || STATUS_OPTIONS[0];
+  const ActiveIcon = activeOption.icon;
+
   return (
     <Box flex={1} bg="#000000" style={{ paddingTop: insets.top }}>
       {/* App Bar */}
@@ -211,28 +214,39 @@ export const AgentStatusScreen: React.FC = () => {
 
                 <HStack space="md" alignItems="center">
                   <Center w={48} h={48} borderRadius="$full" bg="#1a1a1a">
-                    <CircleDot size={24} color="#ffffff" />
+                    <ActiveIcon size={24} color="#ffffff" />
                   </Center>
                   <VStack flex={1}>
                     <Heading size="lg" color="#ffffff" fontWeight="$bold" testID="active-status-title">
-                      {STATUS_OPTIONS.find(o => o.type === currentStatus)?.title || 'Available'}
+                      {activeOption.title}
                     </Heading>
                     <Text size="xs" color="#aaaaaa">
-                      {STATUS_OPTIONS.find(o => o.type === currentStatus)?.subtitle}
+                      {activeOption.subtitle}
                     </Text>
                   </VStack>
                 </HStack>
 
                 <Box h={1} bg="#1a1a1a" />
 
-                <HStack justifyContent="space-between" alignItems="center">
-                  <Text size="xs" color="#666666">
-                    Penyimpanan: AsyncStorage (Persisted)
-                  </Text>
-                  <Text size="xs" color="#888888" testID="last-updated-text">
-                    Diperbarui: {formatTimestamp(lastUpdated)}
-                  </Text>
-                </HStack>
+                {/* Storage & Timestamp Details */}
+                <VStack space="xs">
+                  <HStack justifyContent="space-between" alignItems="center">
+                    <Text size="xs" color="#666666">
+                      Penyimpanan
+                    </Text>
+                    <Text size="xs" color="#aaaaaa" fontWeight="$medium">
+                      AsyncStorage (Persisted)
+                    </Text>
+                  </HStack>
+                  <HStack justifyContent="space-between" alignItems="center">
+                    <Text size="xs" color="#666666">
+                      Terakhir Diperbarui
+                    </Text>
+                    <Text size="xs" color="#ffffff" fontWeight="$medium" testID="last-updated-text">
+                      {formatTimestamp(lastUpdated)}
+                    </Text>
+                  </HStack>
+                </VStack>
               </VStack>
             </Box>
 
