@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from './AuthContext';
 import { RootStackParamList } from '../types/navigation';
 import LoginScreen from '../screens/LoginScreen';
-import HomeScreen from '../screens/HomeScreen';
+import MainTabNavigator from './MainTabNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -14,7 +14,7 @@ export const RootNavigator: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38bdf8" />
+        <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
@@ -26,7 +26,7 @@ export const RootNavigator: React.FC = () => {
         animation: 'fade',
       }}>
       {user ? (
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Main" component={MainTabNavigator} />
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}
@@ -37,7 +37,7 @@ export const RootNavigator: React.FC = () => {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
   },
