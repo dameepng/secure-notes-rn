@@ -79,4 +79,30 @@ describe('DeviceInfoScreen (Fase 2 & Fase 5: Device Info & Battery Status)', () 
     expect(batteryLevel.props.children).toBeTruthy();
     expect(batteryBadge.props.children).toBeTruthy();
   });
+
+  it('renders camera card and triggers open camera on button press', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | null = null;
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(
+        <GluestackUIProvider config={config}>
+          <SafeAreaProvider initialMetrics={initialMetrics}>
+            <DeviceInfoScreen />
+          </SafeAreaProvider>
+        </GluestackUIProvider>,
+      );
+    });
+
+    const root = renderer!.root;
+    const cameraBadge = root.findByProps({
+      testID: 'camera-permission-badge',
+    });
+    const btnCamera = root.findByProps({ testID: 'btn-open-camera' });
+
+    expect(cameraBadge).toBeTruthy();
+    expect(btnCamera).toBeTruthy();
+
+    await ReactTestRenderer.act(async () => {
+      btnCamera.props.onPress();
+    });
+  });
 });
