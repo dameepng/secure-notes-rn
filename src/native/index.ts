@@ -69,4 +69,12 @@ export {
   launchNativeCamera,
 } from './camera';
 export type { CameraPermissionState, CameraLaunchResult } from './camera';
+export { default as NativeAudioRouter } from './NativeAudioRouter';
+export {
+  setDeviceAudioOutput,
+  getDeviceAudioOutput,
+  playSimulationAudio,
+  stopSimulationAudio,
+} from './audioRouter';
+export type { AudioOutputMode, AudioRouterState } from './audioRouter';
 export default NativeSecurityChecker;
