@@ -19,6 +19,7 @@ class MainApplication : Application(), ReactApplication {
               // Custom TurboModule packages registration
               add(SecurityCheckerPackage())
               add(BatteryInfoPackage())
+              add(CameraLauncherPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
