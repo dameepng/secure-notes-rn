@@ -14,26 +14,32 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const MainTabNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'android' ? 12 : 16);
-  const tabBarHeight = 56 + bottomInset;
+
+  // Standar safe area bottom padding (Material 3 & Apple HIG 2026 best practice):
+  // Menjamin ada jarak aman minimal di atas gesture navigation handle Android & home indicator iOS
+  const bottomInset = Math.max(
+    insets.bottom,
+    Platform.select({ ios: 28, android: 16, default: 16 }),
+  );
+  const tabBarHeight = 60 + bottomInset;
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#000000',
+          backgroundColor: '#050505',
           borderTopColor: '#1a1a1a',
           borderTopWidth: 1,
           height: tabBarHeight,
-          paddingBottom: bottomInset + 2,
           paddingTop: 8,
-          elevation: 0,
+          paddingBottom: bottomInset,
+          elevation: 8,
         },
         tabBarActiveTintColor: '#ffffff',
         tabBarInactiveTintColor: '#666666',
         tabBarLabelStyle: styles.tabBarLabel,
-        tabBarItemStyle: styles.tabBarItem,
+        tabBarIconStyle: styles.tabBarIcon,
         tabBarHideOnKeyboard: true,
       }}>
       <Tab.Screen
@@ -42,7 +48,7 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Notes',
           tabBarIcon: ({ color, size }) => (
-            <FileText size={size - 2} color={color} />
+            <FileText size={22} color={color} strokeWidth={2} />
           ),
         }}
       />
@@ -52,7 +58,7 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Status',
           tabBarIcon: ({ color, size }) => (
-            <UserCheck size={size - 2} color={color} />
+            <UserCheck size={22} color={color} strokeWidth={2} />
           ),
         }}
       />
@@ -62,7 +68,7 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Call Sim',
           tabBarIcon: ({ color, size }) => (
-            <PhoneCall size={size - 2} color={color} />
+            <PhoneCall size={22} color={color} strokeWidth={2} />
           ),
         }}
       />
@@ -72,7 +78,7 @@ export const MainTabNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Device',
           tabBarIcon: ({ color, size }) => (
-            <Smartphone size={size - 2} color={color} />
+            <Smartphone size={22} color={color} strokeWidth={2} />
           ),
         }}
       />
@@ -84,10 +90,10 @@ const styles = StyleSheet.create({
   tabBarLabel: {
     fontSize: 11,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 3,
   },
-  tabBarItem: {
-    paddingVertical: 2,
+  tabBarIcon: {
+    marginTop: 2,
   },
 });
 
