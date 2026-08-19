@@ -59,4 +59,7 @@ export async function checkDeviceSecurityStatus(): Promise<SecurityStatus> {
 
 export { NativeSecurityChecker };
 export type { Spec };
+export { default as NativeBatteryInfo } from './NativeBatteryInfo';
+export { getDeviceBatteryStatus } from './battery';
+export type { BatteryStatus } from './battery';
 export default NativeSecurityChecker;
