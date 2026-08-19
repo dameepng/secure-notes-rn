@@ -62,4 +62,11 @@ export type { Spec };
 export { default as NativeBatteryInfo } from './NativeBatteryInfo';
 export { getDeviceBatteryStatus } from './battery';
 export type { BatteryStatus } from './battery';
+export { default as NativeCameraLauncher } from './NativeCameraLauncher';
+export {
+  checkCameraPermission,
+  requestCameraPermission,
+  launchNativeCamera,
+} from './camera';
+export type { CameraPermissionState, CameraLaunchResult } from './camera';
 export default NativeSecurityChecker;
