@@ -16,8 +16,9 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
-              // Custom TurboModule package registration
+              // Custom TurboModule packages registration
               add(SecurityCheckerPackage())
+              add(BatteryInfoPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
