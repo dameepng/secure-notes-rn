@@ -1,6 +1,7 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
 const defaultConfig = getDefaultConfig(__dirname);
+const { sourceExts, assetExts } = defaultConfig.resolver;
 
 /**
  * Metro configuration
@@ -10,6 +11,7 @@ const defaultConfig = getDefaultConfig(__dirname);
  */
 const config = {
   resolver: {
+    sourceExts: [...sourceExts, 'mjs', 'cjs'],
     blockList: [
       /.*[/\\]android[/\\].*/,
       /.*[/\\]ios[/\\].*/,
