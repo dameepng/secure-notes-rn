@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { Linking, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DeviceInfo from 'react-native-device-info';
 import {
@@ -30,9 +30,18 @@ import {
   BatteryLow,
   BatteryWarning,
   Zap,
+  Camera,
+  Settings,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react-native';
 
 import { getDeviceBatteryStatus, BatteryStatus } from '../native/battery';
+import {
+  checkCameraPermission,
+  launchNativeCamera,
+  CameraPermissionState,
+} from '../native/camera';
 
 export interface DeviceInfoData {
   brand: string;
@@ -58,6 +67,10 @@ export const DeviceInfoScreen: React.FC = () => {
     isCharging: false,
     source: 'UNAVAILABLE',
   });
+  const [cameraPermission, setCameraPermission] =
+    useState<CameraPermissionState>('UNDETERMINED');
+  const [cameraMessage, setCameraMessage] = useState<string | null>(null);
+  const [isLaunchingCamera, setIsLaunchingCamera] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const fetchDeviceInfo = useCallback(async () => {
@@ -78,11 +91,15 @@ export const DeviceInfoScreen: React.FC = () => {
         bundleId,
       });
 
-      // Fetch live battery status from Native TurboModule / Fallback
+      // Fetch live battery status
       const battery = await getDeviceBatteryStatus();
       setBatteryStatus(battery);
+
+      // Check current camera permission without dialog prompt
+      const perm = await checkCameraPermission();
+      setCameraPermission(perm);
     } catch (error) {
-      console.error('Failed to reload device info or battery status:', error);
+      console.error('Failed to reload device info or native statuses:', error);
     } finally {
       setRefreshing(false);
     }
@@ -96,6 +113,33 @@ export const DeviceInfoScreen: React.FC = () => {
     setRefreshing(true);
     fetchDeviceInfo();
   }, [fetchDeviceInfo]);
+
+  const handleOpenCamera = useCallback(async () => {
+    setIsLaunchingCamera(true);
+    setCameraMessage(null);
+
+    try {
+      const result = await launchNativeCamera();
+      setCameraPermission(result.permissionStatus);
+
+      if (result.success) {
+        setCameraMessage('Aplikasi kamera native berhasil dibuka.');
+      } else {
+        setCameraMessage(result.errorMessage || 'Gagal membuka kamera.');
+      }
+    } catch (error: any) {
+      console.error('Failed to trigger camera:', error);
+      setCameraMessage(error?.message || 'Terjadi kesalahan sistem.');
+    } finally {
+      setIsLaunchingCamera(false);
+    }
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    Linking.openSettings().catch(err => {
+      console.error('Failed to open app settings:', err);
+    });
+  }, []);
 
   const getBatteryIcon = () => {
     if (batteryStatus.isCharging) {
@@ -117,6 +161,37 @@ export const DeviceInfoScreen: React.FC = () => {
   };
 
   const BatteryStateIcon = getBatteryIcon();
+
+  const getPermissionBadgeConfig = () => {
+    switch (cameraPermission) {
+      case 'GRANTED':
+        return {
+          label: 'Diizinkan',
+          bg: '#ffffff',
+          color: '#000000',
+        };
+      case 'DENIED':
+        return {
+          label: 'Ditolak',
+          bg: '#333333',
+          color: '#ffffff',
+        };
+      case 'NEVER_ASK_AGAIN':
+        return {
+          label: 'Ditolak Permanen',
+          bg: '#331111',
+          color: '#ff6666',
+        };
+      default:
+        return {
+          label: 'Belum Diminta',
+          bg: '#1a1a1a',
+          color: '#888888',
+        };
+    }
+  };
+
+  const permConfig = getPermissionBadgeConfig();
 
   return (
     <Box flex={1} bg="#000000" style={{ paddingTop: insets.top }}>
@@ -280,6 +355,117 @@ export const DeviceInfoScreen: React.FC = () => {
                     borderRadius="$full"
                   />
                 </Box>
+              </VStack>
+            </Box>
+          </VStack>
+
+          {/* Native Camera Access Card (Fase 6) */}
+          <VStack space="xs">
+            <Text
+              size="xs"
+              color="#888888"
+              fontWeight="$bold"
+              px="$1"
+              textTransform="uppercase">
+              Akses Kamera Perangkat (Native Intent)
+            </Text>
+
+            <Box
+              bg="#111111"
+              borderColor="#222222"
+              borderWidth={1.5}
+              borderRadius="$xl"
+              p="$5">
+              <VStack space="md">
+                <HStack justifyContent="space-between" alignItems="center">
+                  <HStack space="sm" alignItems="center">
+                    <Center w={36} h={36} borderRadius="$full" bg="#1a1a1a">
+                      <Camera size={20} color="#ffffff" />
+                    </Center>
+                    <VStack>
+                      <Heading size="sm" color="#ffffff" fontWeight="$bold">
+                        Kamera Native
+                      </Heading>
+                      <Text size="2xs" color="#888888">
+                        MediaStore Intent & Runtime Permission
+                      </Text>
+                    </VStack>
+                  </HStack>
+
+                  <Badge
+                    size="sm"
+                    variant="solid"
+                    bg={permConfig.bg}
+                    borderRadius="$sm">
+                    <BadgeText
+                      color={permConfig.color}
+                      fontSize="$2xs"
+                      fontWeight="$bold"
+                      testID="camera-permission-badge">
+                      {permConfig.label}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+
+                {/* Status Message / Alert Feedback */}
+                {cameraMessage ? (
+                  <Box
+                    bg="#0d0d0d"
+                    borderColor="#222222"
+                    borderWidth={1}
+                    borderRadius="$lg"
+                    p="$3">
+                    <HStack space="xs" alignItems="center">
+                      {cameraPermission === 'GRANTED' ? (
+                        <CheckCircle2 size={16} color="#ffffff" />
+                      ) : (
+                        <AlertCircle size={16} color="#ff6666" />
+                      )}
+                      <Text size="xs" color="#cccccc" flex={1}>
+                        {cameraMessage}
+                      </Text>
+                    </HStack>
+                  </Box>
+                ) : null}
+
+                {/* Action Buttons */}
+                <VStack space="xs">
+                  <Button
+                    size="md"
+                    variant="solid"
+                    bg="#ffffff"
+                    borderRadius="$xl"
+                    onPress={handleOpenCamera}
+                    isDisabled={isLaunchingCamera}
+                    px="$4"
+                    testID="btn-open-camera">
+                    <HStack space="xs" alignItems="center" justifyContent="center">
+                      <Camera size={16} color="#000000" />
+                      <ButtonText color="#000000" fontWeight="$bold" fontSize="$xs">
+                        {isLaunchingCamera ? 'Membuka Kamera...' : 'Buka Kamera Bawaan'}
+                      </ButtonText>
+                    </HStack>
+                  </Button>
+
+                  {cameraPermission === 'NEVER_ASK_AGAIN' ? (
+                    <Button
+                      size="md"
+                      variant="outline"
+                      borderColor="#444444"
+                      bg="#1a1a1a"
+                      borderRadius="$xl"
+                      onPress={handleOpenSettings}
+                      px="$4"
+                      testID="btn-open-settings">
+                      <HStack space="xs" alignItems="center" justifyContent="center">
+                        <Settings size={16} color="#ffffff" />
+                        <ButtonText color="#ffffff" fontWeight="$medium" fontSize="$xs">
+                          Buka Pengaturan Aplikasi
+                        </ButtonText>
+                      </HStack>
+                    </Button>
+                  ) : null}
+                </VStack>
               </VStack>
             </Box>
           </VStack>
@@ -469,10 +655,10 @@ export const DeviceInfoScreen: React.FC = () => {
             p="$4">
             <VStack space="xs">
               <Heading size="xs" color="#888888">
-                Fitur Native Lanjutan (Fase 6, 7)
+                Fitur Native Lanjutan (Fase 7)
               </Heading>
               <Text size="2xs" color="#555555">
-                Akses kamera via Intent dan routing audio output native akan ditambahkan pada fase berikutnya.
+                Simulasi audio playback dan routing audio output (earpiece / speaker / headset) akan ditambahkan pada fase berikutnya.
               </Text>
             </VStack>
           </Box>
