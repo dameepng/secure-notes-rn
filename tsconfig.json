@@ -11,7 +11,7 @@
       "@storage/*": ["src/storage/*"],
       "@native/*": ["src/native/*"],
       "@utils/*": ["src/utils/*"],
-      "@types/*": ["src/types/*"]
+      "@appTypes/*": ["src/types/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
