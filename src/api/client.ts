@@ -1,11 +1,11 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { ApiError } from '../types/api';
 
-const DEFAULT_BASE_URL = 'https://jsonplaceholder.typicode.com';
-export const DUMMY_AUTH_TOKEN = 'dummy_token_securenotes_phase2';
+export const MOCKAPI_BASE_URL = 'https://6a8518d29c451dc67a6344bc.mockapi.io/api/v1';
+export const DUMMY_AUTH_TOKEN = 'mockapi_auth_token_securenotes';
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: DEFAULT_BASE_URL,
+  baseURL: MOCKAPI_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export function formatApiError(error: unknown): ApiError {
   };
 }
 
-// Request Interceptor: Attach dummy auth token
+// Request Interceptor: Attach auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (!config.headers.Authorization) {

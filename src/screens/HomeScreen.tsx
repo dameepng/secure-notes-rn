@@ -27,7 +27,13 @@ import {
   createNote,
   deleteNote,
   getNotes,
+  getRawStoredNotes,
+  syncNotesFromApi,
 } from '../storage/noteStorage';
+import {
+  createNoteInApi,
+  deleteNoteFromApi,
+} from '../api/notesApi';
 import { Note, NoteInput } from '../types/note';
 import NoteCard from '../components/NoteCard';
 import AddNoteModal from '../components/AddNoteModal';
@@ -71,8 +77,15 @@ export const HomeScreen: React.FC = () => {
   const loadNotes = useCallback(async () => {
     setLoadError(null);
     try {
-      const data = await getNotes(user?.id);
-      setNotes(data);
+      // 1. Tampilkan catatan lokal terlebih dahulu
+      const localData = await getNotes(user?.id);
+      setNotes(localData);
+
+      // 2. Sinkronkan dengan MockAPI di background
+      const syncedData = await syncNotesFromApi(user?.id);
+      if (syncedData && syncedData.length > 0) {
+        setNotes(syncedData);
+      }
     } catch (error) {
       console.error('Failed to load notes:', error);
       const msg = 'Gagal memuat catatan.';
@@ -88,15 +101,34 @@ export const HomeScreen: React.FC = () => {
     loadNotes();
   }, [loadNotes]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    loadNotes();
-  }, [loadNotes]);
+    try {
+      const synced = await syncNotesFromApi(user?.id);
+      setNotes(synced);
+    } catch (error) {
+      console.warn('Refresh sync failed:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user?.id]);
 
   const handleCreateNote = async (input: NoteInput) => {
     try {
       const newNote = await createNote(input, userId);
       setNotes(prev => [newNote, ...prev]);
+
+      // Kirim data terenkripsi ke MockAPI endpoint /notes
+      try {
+        const rawNotes = await getRawStoredNotes();
+        const stored = rawNotes.find(n => n.id === newNote.id);
+        if (stored) {
+          await createNoteInApi(stored);
+        }
+      } catch (apiError) {
+        console.warn('Gagal sinkronisasi catatan ke MockAPI (tersimpan lokal):', apiError);
+      }
+
       showSuccess(`"${newNote.title}" disimpan.`);
     } catch (error) {
       showError((error as Error).message || 'Gagal menyimpan catatan.');
@@ -117,6 +149,7 @@ export const HomeScreen: React.FC = () => {
             onPress: async () => {
               try {
                 await deleteNote(noteId);
+                deleteNoteFromApi(noteId).catch(() => {});
                 setNotes(prev => prev.filter(n => n.id !== noteId));
                 showInfo('Catatan dihapus.');
               } catch (error) {
@@ -246,7 +279,6 @@ export const HomeScreen: React.FC = () => {
             </Button>
           </HStack>
         )}
-
 
         {/* Notes Header */}
         <HStack justifyContent="space-between" alignItems="center" py="$1">
@@ -444,4 +476,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-
