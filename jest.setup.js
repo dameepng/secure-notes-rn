@@ -38,6 +38,24 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
+const mockDeviceInfo = {
+  getBrand: jest.fn(() => 'Google'),
+  getModel: jest.fn(() => 'Pixel 8 Pro'),
+  getVersion: jest.fn(() => '0.0.1'),
+  getSystemName: jest.fn(() => 'Android'),
+  getSystemVersion: jest.fn(() => '15'),
+  getDeviceId: jest.fn(() => 'husky'),
+  getBundleId: jest.fn(() => 'com.securenotes'),
+  getBatteryLevel: jest.fn(() => Promise.resolve(0.85)),
+  isBatteryCharging: jest.fn(() => Promise.resolve(false)),
+};
+
+jest.mock('react-native-device-info', () => ({
+  __esModule: true,
+  default: mockDeviceInfo,
+  ...mockDeviceInfo,
+}));
+
 jest.mock('@gluestack-ui/themed', () => {
   const { View, Text, TextInput, TouchableOpacity } = require('react-native');
   return {
