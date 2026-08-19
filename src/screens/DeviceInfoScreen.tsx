@@ -9,8 +9,6 @@ import {
   Heading,
   Text,
   Center,
-  Badge,
-  BadgeText,
   Button,
   ButtonText,
   ButtonIcon,
@@ -131,7 +129,6 @@ export const DeviceInfoScreen: React.FC = () => {
     fetchDeviceInfo();
 
     return () => {
-      // Cleanup audio on screen unmount
       stopSimulationAudio();
     };
   }, [fetchDeviceInfo]);
@@ -211,36 +208,18 @@ export const DeviceInfoScreen: React.FC = () => {
 
   const BatteryStateIcon = getBatteryIcon();
 
-  const getPermissionBadgeConfig = () => {
+  const getPermissionLabel = () => {
     switch (cameraPermission) {
       case 'GRANTED':
-        return {
-          label: 'Diizinkan',
-          bg: '#ffffff',
-          color: '#000000',
-        };
+        return 'Diizinkan';
       case 'DENIED':
-        return {
-          label: 'Ditolak',
-          bg: '#333333',
-          color: '#ffffff',
-        };
+        return 'Ditolak';
       case 'NEVER_ASK_AGAIN':
-        return {
-          label: 'Ditolak Permanen',
-          bg: '#331111',
-          color: '#ff6666',
-        };
+        return 'Ditolak Permanen';
       default:
-        return {
-          label: 'Belum Diminta',
-          bg: '#1a1a1a',
-          color: '#888888',
-        };
+        return 'Belum Diminta';
     }
   };
-
-  const permConfig = getPermissionBadgeConfig();
 
   return (
     <Box flex={1} bg="#000000" style={{ paddingTop: insets.top }}>
@@ -302,15 +281,10 @@ export const DeviceInfoScreen: React.FC = () => {
                   {deviceData.systemName} {deviceData.systemVersion}
                 </Text>
               </VStack>
-              <Badge size="sm" variant="solid" bg="#222222" borderRadius="$md">
-                <BadgeText color="#ffffff" fontSize="$2xs">
-                  Native
-                </BadgeText>
-              </Badge>
             </HStack>
           </Box>
 
-          {/* Real-time Battery Status Card (TurboModule) */}
+          {/* Real-time Battery Status Card */}
           <VStack space="xs">
             <Text
               size="xs"
@@ -318,13 +292,13 @@ export const DeviceInfoScreen: React.FC = () => {
               fontWeight="$bold"
               px="$1"
               textTransform="uppercase">
-              Status Baterai Perangkat (Real-Time)
+              Status Baterai
             </Text>
 
             <Box
               bg="#111111"
               borderColor="#222222"
-              borderWidth={1.5}
+              borderWidth={1}
               borderRadius="$xl"
               p="$5">
               <VStack space="md">
@@ -341,8 +315,8 @@ export const DeviceInfoScreen: React.FC = () => {
                         {batteryStatus.isCharging ? (
                           <>
                             <Zap size={12} color="#ffffff" />
-                            <Text size="2xs" color="#ffffff" fontWeight="$bold">
-                              Mengisi Daya (Charging)
+                            <Text size="2xs" color="#ffffff" fontWeight="$medium">
+                              Charging
                             </Text>
                           </>
                         ) : (
@@ -362,38 +336,24 @@ export const DeviceInfoScreen: React.FC = () => {
                       testID="battery-level-value">
                       {batteryStatus.level >= 0 ? `${batteryStatus.level}%` : 'N/A'}
                     </Heading>
-                    <Badge
-                      size="sm"
-                      variant="solid"
-                      bg={
-                        batteryStatus.source === 'TURBOMODULE'
-                          ? '#ffffff'
-                          : '#222222'
-                      }
-                      borderRadius="$sm">
-                      <BadgeText
-                        color={
-                          batteryStatus.source === 'TURBOMODULE'
-                            ? '#000000'
-                            : '#aaaaaa'
-                        }
-                        fontSize="$2xs"
-                        fontWeight="$bold"
-                        testID="battery-source-badge">
-                        {batteryStatus.source === 'TURBOMODULE'
-                          ? 'TurboModule JSI'
-                          : batteryStatus.source === 'DEVICE_INFO'
-                          ? 'Device Info'
-                          : 'Unavailable'}
-                      </BadgeText>
-                    </Badge>
+                    <Text
+                      size="2xs"
+                      color="#666666"
+                      fontWeight="$medium"
+                      testID="battery-source-badge">
+                      {batteryStatus.source === 'TURBOMODULE'
+                        ? 'TurboModule JSI'
+                        : batteryStatus.source === 'DEVICE_INFO'
+                        ? 'Device Info'
+                        : 'Unavailable'}
+                    </Text>
                   </VStack>
                 </HStack>
 
                 {/* Battery Progress Bar Gauge */}
                 <Box
                   w="100%"
-                  h={8}
+                  h={6}
                   bg="#1a1a1a"
                   borderRadius="$full"
                   overflow="hidden">
@@ -408,7 +368,7 @@ export const DeviceInfoScreen: React.FC = () => {
             </Box>
           </VStack>
 
-          {/* Native Camera Access Card (Fase 6) */}
+          {/* Native Camera Access Card */}
           <VStack space="xs">
             <Text
               size="xs"
@@ -416,13 +376,13 @@ export const DeviceInfoScreen: React.FC = () => {
               fontWeight="$bold"
               px="$1"
               textTransform="uppercase">
-              Akses Kamera Perangkat (Native Intent)
+              Akses Kamera
             </Text>
 
             <Box
               bg="#111111"
               borderColor="#222222"
-              borderWidth={1.5}
+              borderWidth={1}
               borderRadius="$xl"
               p="$5">
               <VStack space="md">
@@ -436,24 +396,18 @@ export const DeviceInfoScreen: React.FC = () => {
                         Kamera Native
                       </Heading>
                       <Text size="2xs" color="#888888">
-                        MediaStore Intent & Runtime Permission
+                        MediaStore Intent
                       </Text>
                     </VStack>
                   </HStack>
 
-                  <Badge
-                    size="sm"
-                    variant="solid"
-                    bg={permConfig.bg}
-                    borderRadius="$sm">
-                    <BadgeText
-                      color={permConfig.color}
-                      fontSize="$2xs"
-                      fontWeight="$bold"
-                      testID="camera-permission-badge">
-                      {permConfig.label}
-                    </BadgeText>
-                  </Badge>
+                  <Text
+                    size="xs"
+                    color={cameraPermission === 'GRANTED' ? '#ffffff' : '#888888'}
+                    fontWeight="$medium"
+                    testID="camera-permission-badge">
+                    {getPermissionLabel()}
+                  </Text>
                 </HStack>
 
                 {/* Status Message / Alert Feedback */}
@@ -519,7 +473,7 @@ export const DeviceInfoScreen: React.FC = () => {
             </Box>
           </VStack>
 
-          {/* Audio Output Routing & Playback Simulator Card (Fase 7) */}
+          {/* Audio Output Routing & Playback Card */}
           <VStack space="xs">
             <Text
               size="xs"
@@ -527,13 +481,13 @@ export const DeviceInfoScreen: React.FC = () => {
               fontWeight="$bold"
               px="$1"
               textTransform="uppercase">
-              Routing Output Audio & Playback (Fase 7)
+              Routing Audio & Playback
             </Text>
 
             <Box
               bg="#111111"
               borderColor="#222222"
-              borderWidth={1.5}
+              borderWidth={1}
               borderRadius="$xl"
               p="$5">
               <VStack space="md">
@@ -544,107 +498,100 @@ export const DeviceInfoScreen: React.FC = () => {
                     </Center>
                     <VStack>
                       <Heading size="sm" color="#ffffff" fontWeight="$bold">
-                        Audio Output Routing
+                        Output Audio
                       </Heading>
                       <Text size="2xs" color="#888888">
-                        AudioManager Native JSI Switching
+                        AudioManager Switching
                       </Text>
                     </VStack>
                   </HStack>
 
-                  <Badge size="sm" variant="solid" bg="#ffffff" borderRadius="$sm">
-                    <BadgeText
-                      color="#000000"
-                      fontSize="$2xs"
-                      fontWeight="$bold"
-                      testID="audio-active-route-badge">
-                      {audioOutput.toUpperCase()}
-                    </BadgeText>
-                  </Badge>
+                  <Text
+                    size="xs"
+                    color="#888888"
+                    fontWeight="$medium"
+                    testID="audio-active-route-badge">
+                    {audioOutput.toUpperCase()}
+                  </Text>
                 </HStack>
 
                 {/* 3 Output Mode Selection Buttons */}
-                <VStack space="xs">
-                  <Text size="2xs" color="#666666" fontWeight="$bold" textTransform="uppercase">
-                    Pilih Jalur Output
-                  </Text>
-                  <HStack space="xs">
-                    {/* Speaker */}
-                    <Button
-                      flex={1}
-                      size="sm"
-                      variant={audioOutput === 'speaker' ? 'solid' : 'outline'}
-                      bg={audioOutput === 'speaker' ? '#ffffff' : '#111111'}
-                      borderColor={audioOutput === 'speaker' ? '#ffffff' : '#222222'}
-                      borderRadius="$lg"
-                      onPress={() => handleSelectAudioOutput('speaker')}
-                      px="$2"
-                      testID="btn-route-speaker">
-                      <HStack space="xs" alignItems="center" justifyContent="center">
-                        <Volume2
-                          size={14}
-                          color={audioOutput === 'speaker' ? '#000000' : '#888888'}
-                        />
-                        <ButtonText
-                          color={audioOutput === 'speaker' ? '#000000' : '#888888'}
-                          fontWeight="$bold"
-                          fontSize="$2xs">
-                          Speaker
-                        </ButtonText>
-                      </HStack>
-                    </Button>
+                <HStack space="xs">
+                  {/* Speaker */}
+                  <Button
+                    flex={1}
+                    size="sm"
+                    variant={audioOutput === 'speaker' ? 'solid' : 'outline'}
+                    bg={audioOutput === 'speaker' ? '#ffffff' : '#111111'}
+                    borderColor={audioOutput === 'speaker' ? '#ffffff' : '#222222'}
+                    borderRadius="$lg"
+                    onPress={() => handleSelectAudioOutput('speaker')}
+                    px="$2"
+                    testID="btn-route-speaker">
+                    <HStack space="xs" alignItems="center" justifyContent="center">
+                      <Volume2
+                        size={14}
+                        color={audioOutput === 'speaker' ? '#000000' : '#888888'}
+                      />
+                      <ButtonText
+                        color={audioOutput === 'speaker' ? '#000000' : '#888888'}
+                        fontWeight="$bold"
+                        fontSize="$2xs">
+                        Speaker
+                      </ButtonText>
+                    </HStack>
+                  </Button>
 
-                    {/* Earpiece */}
-                    <Button
-                      flex={1}
-                      size="sm"
-                      variant={audioOutput === 'earpiece' ? 'solid' : 'outline'}
-                      bg={audioOutput === 'earpiece' ? '#ffffff' : '#111111'}
-                      borderColor={audioOutput === 'earpiece' ? '#ffffff' : '#222222'}
-                      borderRadius="$lg"
-                      onPress={() => handleSelectAudioOutput('earpiece')}
-                      px="$2"
-                      testID="btn-route-earpiece">
-                      <HStack space="xs" alignItems="center" justifyContent="center">
-                        <Phone
-                          size={14}
-                          color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
-                        />
-                        <ButtonText
-                          color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
-                          fontWeight="$bold"
-                          fontSize="$2xs">
-                          Earpiece
-                        </ButtonText>
-                      </HStack>
-                    </Button>
+                  {/* Earpiece */}
+                  <Button
+                    flex={1}
+                    size="sm"
+                    variant={audioOutput === 'earpiece' ? 'solid' : 'outline'}
+                    bg={audioOutput === 'earpiece' ? '#ffffff' : '#111111'}
+                    borderColor={audioOutput === 'earpiece' ? '#ffffff' : '#222222'}
+                    borderRadius="$lg"
+                    onPress={() => handleSelectAudioOutput('earpiece')}
+                    px="$2"
+                    testID="btn-route-earpiece">
+                    <HStack space="xs" alignItems="center" justifyContent="center">
+                      <Phone
+                        size={14}
+                        color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
+                      />
+                      <ButtonText
+                        color={audioOutput === 'earpiece' ? '#000000' : '#888888'}
+                        fontWeight="$bold"
+                        fontSize="$2xs">
+                        Earpiece
+                      </ButtonText>
+                    </HStack>
+                  </Button>
 
-                    {/* Headset */}
-                    <Button
-                      flex={1}
-                      size="sm"
-                      variant={audioOutput === 'headset' ? 'solid' : 'outline'}
-                      bg={audioOutput === 'headset' ? '#ffffff' : '#111111'}
-                      borderColor={audioOutput === 'headset' ? '#ffffff' : '#222222'}
-                      borderRadius="$lg"
-                      onPress={() => handleSelectAudioOutput('headset')}
-                      px="$2"
-                      testID="btn-route-headset">
-                      <HStack space="xs" alignItems="center" justifyContent="center">
-                        <Headphones
-                          size={14}
-                          color={audioOutput === 'headset' ? '#000000' : '#888888'}
-                        />
-                        <ButtonText
-                          color={audioOutput === 'headset' ? '#000000' : '#888888'}
-                          fontWeight="$bold"
-                          fontSize="$2xs">
-                          Headset
-                        </ButtonText>
-                      </HStack>
-                    </Button>
-                  </HStack>
-                </VStack>
+                  {/* Headset */}
+                  <Button
+                    flex={1}
+                    size="sm"
+                    variant={audioOutput === 'headset' ? 'solid' : 'outline'}
+                    bg={audioOutput === 'headset' ? '#ffffff' : '#111111'}
+                    borderColor={audioOutput === 'headset' ? '#ffffff' : '#222222'}
+                    borderRadius="$lg"
+                    onPress={() => handleSelectAudioOutput('headset')}
+                    px="$2"
+                    testID="btn-route-headset">
+                    <HStack space="xs" alignItems="center" justifyContent="center">
+                      <Headphones
+                        size={14}
+                        color={audioOutput === 'headset' ? '#000000' : '#888888'}
+                      />
+                      <ButtonText
+                        color={audioOutput === 'headset' ? '#000000' : '#888888'}
+                        fontWeight="$bold"
+                        fontSize="$2xs">
+                        Headset
+                      </ButtonText>
+                    </HStack>
+                  </Button>
+                </HStack>
 
                 {/* Simulation Audio Playback Toggle */}
                 <Button
@@ -685,7 +632,7 @@ export const DeviceInfoScreen: React.FC = () => {
               fontWeight="$bold"
               px="$1"
               textTransform="uppercase">
-              Informasi Perangkat Dasar
+              Informasi Perangkat
             </Text>
 
             <Box
@@ -791,7 +738,7 @@ export const DeviceInfoScreen: React.FC = () => {
                   <HStack space="sm" alignItems="center">
                     <Info size={16} color="#888888" />
                     <Text size="sm" color="#aaaaaa">
-                      Package / Bundle ID
+                      Package ID
                     </Text>
                   </HStack>
                   <Text size="2xs" color="#aaaaaa" fontWeight="$medium">
@@ -810,7 +757,7 @@ export const DeviceInfoScreen: React.FC = () => {
               fontWeight="$bold"
               px="$1"
               textTransform="uppercase">
-              Native Bridge & Arsitektur
+              Arsitektur Native
             </Text>
 
             <Box
@@ -827,11 +774,9 @@ export const DeviceInfoScreen: React.FC = () => {
                       TurboModule JSI
                     </Text>
                   </HStack>
-                  <Badge size="sm" variant="solid" bg="#1a1a1a" borderRadius="$md">
-                    <BadgeText color="#ffffff" fontSize="$2xs">
-                      Aktif
-                    </BadgeText>
-                  </Badge>
+                  <Text size="xs" color="#ffffff" fontWeight="$medium">
+                    Aktif
+                  </Text>
                 </HStack>
 
                 <Box h={1} bg="#1a1a1a" />
@@ -843,11 +788,9 @@ export const DeviceInfoScreen: React.FC = () => {
                       Fabric UI Manager
                     </Text>
                   </HStack>
-                  <Badge size="sm" variant="solid" bg="#1a1a1a" borderRadius="$md">
-                    <BadgeText color="#ffffff" fontSize="$2xs">
-                      Aktif
-                    </BadgeText>
-                  </Badge>
+                  <Text size="xs" color="#ffffff" fontWeight="$medium">
+                    Aktif
+                  </Text>
                 </HStack>
               </VStack>
             </Box>
