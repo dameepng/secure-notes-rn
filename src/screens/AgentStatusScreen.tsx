@@ -13,7 +13,6 @@ import {
   BadgeText,
 } from '@gluestack-ui/themed';
 import {
-  UserCheck,
   CheckCircle2,
   Clock,
   PhoneCall,
@@ -162,12 +161,9 @@ export const AgentStatusScreen: React.FC = () => {
         pb="$4"
         borderBottomWidth={1}
         borderBottomColor="#1a1a1a">
-        <HStack space="sm" alignItems="center">
-          <UserCheck size={22} color="#ffffff" />
-          <Heading size="xl" color="#ffffff" fontWeight="$bold">
-            Agent Status
-          </Heading>
-        </HStack>
+        <Heading size="xl" color="#ffffff" fontWeight="$bold">
+          Agent Status
+        </Heading>
         {saving && <Spinner size="small" color="#ffffff" />}
       </HStack>
 
